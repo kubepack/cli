@@ -409,7 +409,6 @@ gopkg.in/yaml.v2
 # helm.sh/helm/v3 v3.0.0-00010101000000-000000000000 => github.com/kubepack/helm/v3 v3.2.2-0.20200523120511-a86fc03a6a93
 ## explicit
 helm.sh/helm/v3/cmd/helm/require
-helm.sh/helm/v3/internal/completion
 helm.sh/helm/v3/internal/experimental/registry
 helm.sh/helm/v3/internal/fileutil
 helm.sh/helm/v3/internal/ignore

@@ -1,4 +1,4 @@
-module github.com/tamalsaha/k-apply
+module kubepack.dev/cli
 
 go 1.14
 

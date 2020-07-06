@@ -1,6 +1,7 @@
 package main
 
 import (
+	"kubepack.dev/cli/pkg"
 	"math/rand"
 	"time"
 
@@ -15,7 +16,7 @@ func main() {
 	logs.InitLogs()
 	defer logs.FlushLogs()
 
-	if err := NewRootCmd().Execute(); err != nil {
+	if err := pkg.NewRootCmd().Execute(); err != nil {
 		log.Fatalln("error:", err)
 	}
 }

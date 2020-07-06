@@ -1,4 +1,4 @@
-package main
+package pkg
 
 import (
 	"flag"
@@ -13,7 +13,7 @@ import (
 
 	// Import to initialize client auth plugins.
 	"github.com/spf13/cobra"
-	"github.com/tamalsaha/k-apply/apply"
+	"kubepack.dev/cli/pkg/apply"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/cli"
 	kubefake "helm.sh/helm/v3/pkg/kube/fake"
