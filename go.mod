@@ -3,7 +3,10 @@ module kubepack.dev/cli
 go 1.14
 
 require (
+	github.com/Masterminds/semver/v3 v3.1.0
+	github.com/Masterminds/sprig/v3 v3.1.0
 	github.com/appscode/go v0.0.0-20200323182826-54e98e09185a
+	github.com/gosuri/uitable v0.0.4
 	github.com/jonboulle/clockwork v0.2.0
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.0.0
@@ -19,7 +22,6 @@ require (
 	k8s.io/kubectl v0.18.5
 	k8s.io/utils v0.0.0-20200324210504-a9aa75ae1b89
 	kmodules.xyz/client-go v0.0.0-20200630053911-20d035822d35
-	rsc.io/letsencrypt v0.0.3 // indirect
 	sigs.k8s.io/yaml v1.2.0
 )
 

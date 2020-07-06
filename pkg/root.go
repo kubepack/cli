@@ -8,6 +8,7 @@ import (
 	"os"
 	"strings"
 
+	"kubepack.dev/cli/pkg/action"
 	"kubepack.dev/cli/pkg/apply"
 
 	"github.com/spf13/pflag"
@@ -15,7 +16,6 @@ import (
 
 	// Import to initialize client auth plugins.
 	"github.com/spf13/cobra"
-	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/cli"
 	kubefake "helm.sh/helm/v3/pkg/kube/fake"
 	"helm.sh/helm/v3/pkg/release"
