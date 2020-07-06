@@ -18,8 +18,6 @@ func NewRootCmd() *cobra.Command {
 		Short:             `Test kubectl apply`,
 		Long:              `Test kubectl apply`,
 		DisableAutoGenTag: true,
-		PersistentPreRun: func(c *cobra.Command, args []string) {
-		},
 	}
 
 	flags := rootCmd.PersistentFlags()
