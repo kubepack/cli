@@ -197,11 +197,6 @@ func NewCmdApply(baseName string, f cmdutil.Factory, ioStreams genericclioptions
 	cmdutil.AddDryRunFlag(cmd)
 	cmdutil.AddServerSideApplyFlags(cmd)
 
-	// apply subcommands
-	cmd.AddCommand(NewCmdApplyViewLastApplied(f, ioStreams))
-	cmd.AddCommand(NewCmdApplySetLastApplied(f, ioStreams))
-	cmd.AddCommand(NewCmdApplyEditLastApplied(f, ioStreams))
-
 	return cmd
 }
 
