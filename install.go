@@ -24,9 +24,7 @@ import (
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
-
 	"helm.sh/helm/v3/cmd/helm/require"
-	"helm.sh/helm/v3/internal/completion"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chart/loader"
@@ -122,11 +120,6 @@ func newInstallCmd(cfg *action.Configuration, out io.Writer) *cobra.Command {
 			return outfmt.Write(out, &statusPrinter{rel, settings.Debug})
 		},
 	}
-
-	// Function providing dynamic auto-completion
-	completion.RegisterValidArgsFunc(cmd, func(cmd *cobra.Command, args []string, toComplete string) ([]string, completion.BashCompDirective) {
-		return compInstall(args, toComplete, client)
-	})
 
 	addInstallFlags(cmd.Flags(), client, valueOpts)
 	bindOutputFlag(cmd, &outfmt)
@@ -238,16 +231,4 @@ func isChartInstallable(ch *chart.Chart) (bool, error) {
 		return true, nil
 	}
 	return false, errors.Errorf("%s charts are not installable", ch.Metadata.Type)
-}
-
-// Provide dynamic auto-completion for the install and template commands
-func compInstall(args []string, toComplete string, client *action.Install) ([]string, completion.BashCompDirective) {
-	requiredArgs := 1
-	if client.GenerateName {
-		requiredArgs = 0
-	}
-	if len(args) == requiredArgs {
-		return compListCharts(toComplete, true)
-	}
-	return nil, completion.BashCompDirectiveNoFileComp
 }
