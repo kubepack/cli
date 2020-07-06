@@ -1,9 +1,10 @@
 package main
 
 import (
-	"kubepack.dev/cli/pkg"
 	"math/rand"
 	"time"
+
+	"kubepack.dev/cli/pkg"
 
 	"github.com/appscode/go/log"
 	_ "k8s.io/client-go/kubernetes/fake"

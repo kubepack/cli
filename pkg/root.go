@@ -3,17 +3,18 @@ package pkg
 import (
 	"flag"
 	"fmt"
-	"github.com/spf13/pflag"
 	"io/ioutil"
 	"log"
 	"os"
 	"strings"
 
+	"kubepack.dev/cli/pkg/apply"
+
+	"github.com/spf13/pflag"
 	"sigs.k8s.io/yaml"
 
 	// Import to initialize client auth plugins.
 	"github.com/spf13/cobra"
-	"kubepack.dev/cli/pkg/apply"
 	"helm.sh/helm/v3/pkg/action"
 	"helm.sh/helm/v3/pkg/cli"
 	kubefake "helm.sh/helm/v3/pkg/kube/fake"
