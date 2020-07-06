@@ -2,8 +2,6 @@ package main
 
 import (
 	"math/rand"
-	"os"
-	"runtime"
 	"time"
 
 	"github.com/appscode/go/log"
@@ -16,10 +14,6 @@ func main() {
 	rand.Seed(time.Now().UnixNano())
 	logs.InitLogs()
 	defer logs.FlushLogs()
-
-	if len(os.Getenv("GOMAXPROCS")) == 0 {
-		runtime.GOMAXPROCS(runtime.NumCPU())
-	}
 
 	if err := NewRootCmd().Execute(); err != nil {
 		log.Fatalln("error:", err)

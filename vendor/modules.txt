@@ -24,7 +24,6 @@ github.com/PuerkitoBio/urlesc
 ## explicit
 github.com/appscode/go/context
 github.com/appscode/go/log
-github.com/appscode/go/version
 # github.com/chai2010/gettext-go v0.0.0-20160711120539-c6fed771bfd5
 github.com/chai2010/gettext-go/gettext
 github.com/chai2010/gettext-go/gettext/mo
@@ -166,8 +165,6 @@ golang.org/x/text/unicode/norm
 golang.org/x/text/width
 # golang.org/x/time v0.0.0-20190308202827-9d24e82272b4
 golang.org/x/time/rate
-# gomodules.xyz/version v0.1.0
-gomodules.xyz/version
 # google.golang.org/appengine v1.5.0
 google.golang.org/appengine
 google.golang.org/appengine/internal
