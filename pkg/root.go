@@ -10,6 +10,7 @@ import (
 
 	"kubepack.dev/cli/pkg/action"
 	"kubepack.dev/cli/pkg/apply"
+	"kubepack.dev/cli/pkg/delete"
 
 	"github.com/spf13/pflag"
 	"sigs.k8s.io/yaml"
@@ -63,6 +64,7 @@ func NewRootCmd() *cobra.Command {
 
 	ioStreams, _, _, _ := genericclioptions.NewTestIOStreams()
 	rootCmd.AddCommand(apply.NewCmdApply("k-apply", f, ioStreams))
+	rootCmd.AddCommand(delete.NewCmdDelete(f, ioStreams))
 
 	actionConfig := new(action.Configuration)
 	AddFlags(settings, flags)
