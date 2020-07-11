@@ -29,7 +29,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
-	"k8s.io/apimachinery/pkg/util/sets"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	"k8s.io/cli-runtime/pkg/printers"
 	"k8s.io/cli-runtime/pkg/resource"
@@ -89,11 +88,6 @@ type ApplyOptions struct {
 	objects       []*resource.Info
 	objectsCached bool
 
-	// Stores visited objects/namespaces for later use
-	// calculating the set of objects to prune.
-	VisitedUids       sets.String
-	VisitedNamespaces sets.String
-
 	// Function run after the objects are generated and
 	// stored in the "objects" field, but before the
 	// apply is run on these objects.
@@ -149,9 +143,6 @@ func NewApplyOptions(ioStreams genericclioptions.IOStreams) *ApplyOptions {
 
 		objects:       []*resource.Info{},
 		objectsCached: false,
-
-		VisitedUids:       sets.NewString(),
-		VisitedNamespaces: sets.NewString(),
 	}
 }
 
@@ -329,11 +320,6 @@ func (o *ApplyOptions) Run() error {
 		if err := o.PreProcessorFn(); err != nil {
 			return err
 		}
-	}
-
-	// Enforce CLI specified namespace on server request.
-	if o.EnforceNamespace {
-		o.VisitedNamespaces.Insert(o.Namespace)
 	}
 
 	// Generates the objects using the resource builder if they have not
@@ -543,48 +529,4 @@ func (o *ApplyOptions) shouldPrintObject() bool {
 		shouldPrint = true
 	}
 	return shouldPrint
-}
-
-func (o *ApplyOptions) printObjects() error {
-
-	if !o.shouldPrintObject() {
-		return nil
-	}
-
-	infos, err := o.GetObjects()
-	if err != nil {
-		return err
-	}
-
-	if len(infos) > 0 {
-		printer, err := o.ToPrinter("")
-		if err != nil {
-			return err
-		}
-
-		objToPrint := infos[0].Object
-		if len(infos) > 1 {
-			objs := []runtime.Object{}
-			for _, info := range infos {
-				objs = append(objs, info.Object)
-			}
-			list := &corev1.List{
-				TypeMeta: metav1.TypeMeta{
-					Kind:       "List",
-					APIVersion: "v1",
-				},
-				ListMeta: metav1.ListMeta{},
-			}
-			if err := meta.SetList(list, objs); err != nil {
-				return err
-			}
-
-			objToPrint = list
-		}
-		if err := printer.PrintObj(objToPrint, o.Out); err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
