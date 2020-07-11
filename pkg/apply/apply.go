@@ -62,8 +62,6 @@ type ApplyOptions struct {
 	Selector        string
 	DryRunStrategy  cmdutil.DryRunStrategy
 	DryRunVerifier  *resource.DryRunVerifier
-	Prune           bool
-	PruneResources  []pruneResource
 	cmdBaseName     string
 	All             bool
 	Overwrite       bool
@@ -174,7 +172,6 @@ func NewCmdApply(baseName string, f cmdutil.Factory, ioStreams genericclioptions
 		Run: func(cmd *cobra.Command, args []string) {
 			cmdutil.CheckErr(o.Complete(f, cmd))
 			cmdutil.CheckErr(validateArgs(cmd, args))
-			cmdutil.CheckErr(validatePruneAll(o.Prune, o.All, o.Selector))
 			cmdutil.CheckErr(o.Run())
 		},
 	}
@@ -185,7 +182,6 @@ func NewCmdApply(baseName string, f cmdutil.Factory, ioStreams genericclioptions
 	o.PrintFlags.AddFlags(cmd)
 
 	cmd.Flags().BoolVar(&o.Overwrite, "overwrite", o.Overwrite, "Automatically resolve conflicts between the modified and live configuration by using values from the modified configuration")
-	cmd.Flags().BoolVar(&o.Prune, "prune", o.Prune, "Automatically delete resource objects, including the uninitialized ones, that do not appear in the configs and are created by either apply or create --save-config. Should be used with either -l or --all.")
 	cmdutil.AddValidateFlags(cmd)
 	cmd.Flags().StringVarP(&o.Selector, "selector", "l", o.Selector, "Selector (label query) to filter on, supports '=', '==', and '!='.(e.g. -l key1=value1,key2=value2)")
 	cmd.Flags().BoolVar(&o.All, "all", o.All, "Select all resources in the namespace of the specified resource types.")
@@ -272,31 +268,12 @@ func (o *ApplyOptions) Complete(f cmdutil.Factory, cmd *cobra.Command) error {
 		return err
 	}
 
-	if o.Prune {
-		o.PruneResources, err = parsePruneResources(o.Mapper, o.PruneWhitelist)
-		if err != nil {
-			return err
-		}
-	}
-
-	o.PostProcessorFn = o.PrintAndPrunePostProcessor()
-
 	return nil
 }
 
 func validateArgs(cmd *cobra.Command, args []string) error {
 	if len(args) != 0 {
 		return cmdutil.UsageErrorf(cmd, "Unexpected args: %v", args)
-	}
-	return nil
-}
-
-func validatePruneAll(prune, all bool, selector string) error {
-	if all && len(selector) > 0 {
-		return fmt.Errorf("cannot set --all and --selector at the same time")
-	}
-	if prune && !all && selector == "" {
-		return fmt.Errorf("all resources selected for prune without explicitly passing --all. To prune all resources, pass the --all flag. If you did not mean to prune all resources, specify a label selector")
 	}
 	return nil
 }
@@ -395,8 +372,6 @@ func (o *ApplyOptions) Run() error {
 }
 
 func (o *ApplyOptions) applyOneObject(info *resource.Info) error {
-	o.MarkNamespaceVisited(info)
-
 	if err := o.Recorder.Record(info.Object); err != nil {
 		klog.V(4).Infof("error recording current command: %v", err)
 	}
@@ -450,10 +425,6 @@ See http://k8s.io/docs/reference/using-api/api-concepts/#conflicts`, err)
 
 		info.Refresh(obj, true)
 
-		if err := o.MarkObjectVisited(info); err != nil {
-			return err
-		}
-
 		if o.shouldPrintObject() {
 			return nil
 		}
@@ -504,10 +475,6 @@ See http://k8s.io/docs/reference/using-api/api-concepts/#conflicts`, err)
 			info.Refresh(obj, true)
 		}
 
-		if err := o.MarkObjectVisited(info); err != nil {
-			return err
-		}
-
 		if o.shouldPrintObject() {
 			return nil
 		}
@@ -520,10 +487,6 @@ See http://k8s.io/docs/reference/using-api/api-concepts/#conflicts`, err)
 			return err
 		}
 		return nil
-	}
-
-	if err := o.MarkObjectVisited(info); err != nil {
-		return err
 	}
 
 	if o.DryRunStrategy != cmdutil.DryRunClient {
@@ -624,44 +587,4 @@ func (o *ApplyOptions) printObjects() error {
 	}
 
 	return nil
-}
-
-// MarkNamespaceVisited keeps track of which namespaces the applied
-// objects belong to. Used for pruning.
-func (o *ApplyOptions) MarkNamespaceVisited(info *resource.Info) {
-	if info.Namespaced() {
-		o.VisitedNamespaces.Insert(info.Namespace)
-	}
-}
-
-// MarkNamespaceVisited keeps track of UIDs of the applied
-// objects. Used for pruning.
-func (o *ApplyOptions) MarkObjectVisited(info *resource.Info) error {
-	metadata, err := meta.Accessor(info.Object)
-	if err != nil {
-		return err
-	}
-	o.VisitedUids.Insert(string(metadata.GetUID()))
-	return nil
-}
-
-// PrintAndPrune returns a function which meets the PostProcessorFn
-// function signature. This returned function prints all the
-// objects as a list (if configured for that), and prunes the
-// objects not applied. The returned function is the standard
-// apply post processor.
-func (o *ApplyOptions) PrintAndPrunePostProcessor() func() error {
-
-	return func() error {
-		if err := o.printObjects(); err != nil {
-			return err
-		}
-
-		if o.Prune {
-			p := newPruner(o)
-			return p.pruneAll(o)
-		}
-
-		return nil
-	}
 }
