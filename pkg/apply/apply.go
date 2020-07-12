@@ -318,7 +318,7 @@ func (o *ApplyOptions) Run() error {
 	}
 	// Iterate through all objects, applying each one.
 	for _, info := range infos {
-		if err := o.applyOneObject(info); err != nil {
+		if err := o.ApplyOneObject(info); err != nil {
 			errs = append(errs, err)
 		}
 	}
@@ -334,7 +334,7 @@ func (o *ApplyOptions) Run() error {
 	return nil
 }
 
-func (o *ApplyOptions) applyOneObject(info *resource.Info) error {
+func (o *ApplyOptions) ApplyOneObject(info *resource.Info) error {
 	if err := o.Recorder.Record(info.Object); err != nil {
 		klog.V(4).Infof("error recording current command: %v", err)
 	}
