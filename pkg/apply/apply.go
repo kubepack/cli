@@ -87,14 +87,6 @@ type ApplyOptions struct {
 	// not call the resource builder; only return the set objects.
 	objects       []*resource.Info
 	objectsCached bool
-
-	// Function run after the objects are generated and
-	// stored in the "objects" field, but before the
-	// apply is run on these objects.
-	PreProcessorFn func() error
-	// Function run after all objects have been applied.
-	// The standard PostProcessorFn is "PrintAndPrunePostProcessor()".
-	PostProcessorFn func() error
 }
 
 var (
@@ -314,14 +306,6 @@ func (o *ApplyOptions) SetObjects(infos []*resource.Info) {
 
 // Run executes the `apply` command.
 func (o *ApplyOptions) Run() error {
-
-	if o.PreProcessorFn != nil {
-		klog.V(4).Infof("Running apply pre-processor function")
-		if err := o.PreProcessorFn(); err != nil {
-			return err
-		}
-	}
-
 	// Generates the objects using the resource builder if they have not
 	// already been stored by calling "SetObjects()" in the pre-processor.
 	errs := []error{}
@@ -345,13 +329,6 @@ func (o *ApplyOptions) Run() error {
 	}
 	if len(errs) > 1 {
 		return utilerrors.NewAggregate(errs)
-	}
-
-	if o.PostProcessorFn != nil {
-		klog.V(4).Infof("Running apply post-processor function")
-		if err := o.PostProcessorFn(); err != nil {
-			return err
-		}
 	}
 
 	return nil
