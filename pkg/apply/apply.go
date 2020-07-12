@@ -33,7 +33,6 @@ import (
 	"k8s.io/cli-runtime/pkg/printers"
 	"k8s.io/cli-runtime/pkg/resource"
 	"k8s.io/client-go/dynamic"
-	"k8s.io/klog"
 	"k8s.io/kubectl/pkg/cmd/delete"
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
 	"k8s.io/kubectl/pkg/scheme"
@@ -46,9 +45,6 @@ import (
 
 // ApplyOptions defines flags and other configuration parameters for the `apply` command
 type ApplyOptions struct {
-	RecordFlags *genericclioptions.RecordFlags
-	Recorder    genericclioptions.Recorder
-
 	PrintFlags *genericclioptions.PrintFlags
 	ToPrinter  func(string) (printers.ResourcePrinter, error)
 
@@ -122,14 +118,11 @@ var (
 // NewApplyOptions creates new ApplyOptions for the `apply` command
 func NewApplyOptions(ioStreams genericclioptions.IOStreams) *ApplyOptions {
 	return &ApplyOptions{
-		RecordFlags: genericclioptions.NewRecordFlags(),
 		DeleteFlags: delete.NewDeleteFlags("that contains the configuration to apply"),
 		PrintFlags:  genericclioptions.NewPrintFlags("created").WithTypeSetter(scheme.Scheme),
 
 		Overwrite:    true,
 		OpenAPIPatch: true,
-
-		Recorder: genericclioptions.NoopRecorder{},
 
 		IOStreams: ioStreams,
 
@@ -161,7 +154,6 @@ func NewCmdApply(baseName string, f cmdutil.Factory, ioStreams genericclioptions
 
 	// bind flag structs
 	o.DeleteFlags.AddFlags(cmd)
-	o.RecordFlags.AddFlags(cmd)
 	o.PrintFlags.AddFlags(cmd)
 
 	cmd.Flags().BoolVar(&o.Overwrite, "overwrite", o.Overwrite, "Automatically resolve conflicts between the modified and live configuration by using values from the modified configuration")
@@ -221,12 +213,6 @@ func (o *ApplyOptions) Complete(f cmdutil.Factory, cmd *cobra.Command) error {
 		o.PrintFlags.NamePrintFlags.Operation = operation
 		cmdutil.PrintFlagsWithDryRunStrategy(o.PrintFlags, o.DryRunStrategy)
 		return o.PrintFlags.ToPrinter()
-	}
-
-	o.RecordFlags.Complete(cmd)
-	o.Recorder, err = o.RecordFlags.ToRecorder()
-	if err != nil {
-		return err
 	}
 
 	o.DeleteOptions = o.DeleteFlags.ToOptions(o.DynamicClient, o.IOStreams)
@@ -335,10 +321,6 @@ func (o *ApplyOptions) Run() error {
 }
 
 func (o *ApplyOptions) ApplyOneObject(info *resource.Info) error {
-	if err := o.Recorder.Record(info.Object); err != nil {
-		klog.V(4).Infof("error recording current command: %v", err)
-	}
-
 	if o.ServerSideApply {
 		// Send the full object to be applied on the server side.
 		data, err := runtime.Encode(unstructured.UnstructuredJSONScheme, info.Object)
