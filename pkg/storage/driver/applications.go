@@ -17,27 +17,33 @@ limitations under the License.
 package driver // import "helm.sh/helm/v3/pkg/storage/driver"
 
 import (
-	"bytes"
 	"context"
-	"github.com/gabriel-vasile/mimetype"
+	"encoding/json"
+	chart "helm.sh/helm/v3/pkg/chart"
 	"io"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/util/yaml"
+	corev1 "k8s.io/api/core/v1"
+	"log"
 	"net/http"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
+
 	"kubepack.dev/kubepack/apis/kubepack/v1alpha1"
+
+	"github.com/gabriel-vasile/mimetype"
 	"github.com/pkg/errors"
 	rspb "helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
-	"sigs.k8s.io/application/api/app/v1beta1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	kblabels "k8s.io/apimachinery/pkg/labels"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation"
+	"k8s.io/apimachinery/pkg/util/yaml"
+	"sigs.k8s.io/application/api/app/v1beta1"
 	cs "sigs.k8s.io/application/client/clientset/versioned/typed/app/v1beta1"
 )
 
@@ -235,12 +241,6 @@ func (apps *Applications) Delete(key string) (rls *rspb.Release, err error) {
 func newApplicationsObject(key string, rls *rspb.Release, lbs labels) (*v1beta1.Application, error) {
 	const owner = "helm"
 
-	// encode the release
-	s, err := encodeRelease(rls)
-	if err != nil {
-		return nil, err
-	}
-
 	if lbs == nil {
 		lbs.init()
 	}
@@ -251,10 +251,31 @@ func newApplicationsObject(key string, rls *rspb.Release, lbs labels) (*v1beta1.
 	lbs.set("status", rls.Info.Status.String())
 	lbs.set("version", strconv.Itoa(rls.Version))
 
+	coalesceValues(rls.Chart, rls.Config)
+
+	values, err := json.Marshal(rls.Chart.Values)
+	if err != nil {
+		return nil, err
+	}
+
+	vs := &corev1.Secret{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      key,
+			Namespace: rls.Namespace,
+		},
+		Immutable: nil,
+		Data: map[string][]byte{
+			"values": values,
+		},
+		Type: "kubepack.com/helm-values",
+	}
+// TODO: create this secret
+
 	// create and return configmap object
 	obj := &v1beta1.Application{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   key,
+			Namespace: rls.Namespace,
 			Labels: lbs.toMap(),
 		},
 		Spec: v1beta1.ApplicationSpec{
@@ -274,17 +295,28 @@ func newApplicationsObject(key string, rls *rspb.Release, lbs labels) (*v1beta1.
 			},
 			ComponentGroupKinds: nil,
 			Selector: &metav1.LabelSelector{
-				MatchLabels: map[string]string{
-
-				},
+				MatchLabels: map[string]string{},
 			},
 			AddOwnerRef:   true, // false
-			Info:          nil,
+			Info:          []v1beta1.InfoItem{
+				{
+					Name:      "values",
+					Type:      v1beta1.ReferenceInfoItemType,
+					Value:     "",
+					ValueFrom: &v1beta1.InfoItemSource{
+						Type:            v1beta1.SecretKeyRefInfoItemSourceType,
+						SecretKeyRef:    &v1beta1.SecretKeySelector{
+							ObjectReference: corev1.ObjectReference{
+								Namespace:       vs.Namespace,
+								Name:            vs.Name,
+							},
+							Key:             "values",
+						},
+					},
+				},
+			},
 			AssemblyPhase: v1beta1.Pending,
 		},
-
-
-		Data: map[string]string{"release": s},
 	}
 	if rls.Chart.Metadata.Icon != "" {
 		var imgType string
@@ -310,20 +342,39 @@ func newApplicationsObject(key string, rls *rspb.Release, lbs labels) (*v1beta1.
 		})
 	}
 
-	var components   map[metav1.GroupKind]struct{}
+	var components map[metav1.GroupKind]struct{}
 	var commonLabels map[string]string
 
 	// Hooks ?
-	err = extractComponents(rls.Manifest, components, commonLabels)
+	components, commonLabels, err = extractComponents(rls.Manifest, components, commonLabels)
 	if err != nil {
 		return nil, err
 	}
+
+	gks := make([]metav1.GroupKind, 0, len(components))
+	for gk := range components {
+		gks = append(gks, gk)
+	}
+	sort.Slice(gks, func(i, j int) bool {
+		if gks[i].Group == gks[j].Group {
+			return gks[i].Kind < gks[j].Kind
+		}
+		return gks[i].Group < gks[j].Group
+	})
+	obj.Spec.ComponentGroupKinds = gks
+
+	if len(commonLabels) > 0 {
+		obj.Spec.Selector = &metav1.LabelSelector{
+			MatchLabels: commonLabels,
+		}
+	}
+
 	return obj, nil
 }
 
-var empty = struct {}{}
+var empty = struct{}{}
 
-func extractComponents(data string, components   map[metav1.GroupKind]struct{}, commonLabels map[string]string) error {
+func extractComponents(data string, components map[metav1.GroupKind]struct{}, commonLabels map[string]string) (map[metav1.GroupKind]struct{}, map[string]string, error) {
 	reader := yaml.NewYAMLOrJSONDecoder(strings.NewReader(data), 2048)
 	for {
 		var obj unstructured.Unstructured
@@ -331,7 +382,7 @@ func extractComponents(data string, components   map[metav1.GroupKind]struct{}, 
 		if err == io.EOF {
 			break
 		} else if err != nil {
-			return err
+			return components, commonLabels, err
 		}
 		if obj.IsList() {
 			err := obj.EachListItem(func(item runtime.Object) error {
@@ -355,12 +406,12 @@ func extractComponents(data string, components   map[metav1.GroupKind]struct{}, 
 				return nil
 			})
 			if err != nil {
-				return err
+				return components, commonLabels, err
 			}
 		} else {
 			gv, err := schema.ParseGroupVersion(obj.GetAPIVersion())
 			if err != nil {
-				return err
+				return  components, commonLabels,err
 			}
 			components[metav1.GroupKind{Group: gv.Group, Kind: obj.GetKind()}] = empty
 
@@ -375,5 +426,79 @@ func extractComponents(data string, components   map[metav1.GroupKind]struct{}, 
 			}
 		}
 	}
-	return nil
+	return  components, commonLabels,nil
+}
+
+func copyMap(src map[string]interface{}) map[string]interface{} {
+	m := make(map[string]interface{}, len(src))
+	for k, v := range src {
+		m[k] = v
+	}
+	return m
+}
+
+// coalesceValues builds up a values map for a particular chart.
+//
+// Values in v will override the values in the chart.
+func coalesceValues(c *chart.Chart, v map[string]interface{}) {
+	for key, val := range c.Values {
+		if value, ok := v[key]; ok {
+			if value == nil {
+				// When the YAML value is null, we remove the value's key.
+				// This allows Helm's various sources of values (value files or --set) to
+				// remove incompatible keys from any previous chart, file, or set values.
+				delete(v, key)
+			} else if dest, ok := value.(map[string]interface{}); ok {
+				// if v[key] is a table, merge nv's val table into v[key].
+				src, ok := val.(map[string]interface{})
+				if !ok {
+					log.Printf("warning: skipped value for %s: Not a table.", key)
+					continue
+				}
+				// Because v has higher precedence than nv, dest values override src
+				// values.
+				CoalesceTables(dest, src)
+			}
+		} else {
+			// If the key is not in v, copy it from nv.
+			v[key] = val
+		}
+	}
+}
+
+// CoalesceTables merges a source map into a destination map.
+//
+// dest is considered authoritative.
+func CoalesceTables(dst, src map[string]interface{}) map[string]interface{} {
+	// When --reuse-values is set but there are no modifications yet, return new values
+	if src == nil {
+		return dst
+	}
+	if dst == nil {
+		return src
+	}
+	// Because dest has higher precedence than src, dest values override src
+	// values.
+	for key, val := range src {
+		if dv, ok := dst[key]; ok && dv == nil {
+			delete(dst, key)
+		} else if !ok {
+			dst[key] = val
+		} else if istable(val) {
+			if istable(dv) {
+				CoalesceTables(dv.(map[string]interface{}), val.(map[string]interface{}))
+			} else {
+				log.Printf("warning: cannot overwrite table with non table for %s (%v)", key, val)
+			}
+		} else if istable(dv) {
+			log.Printf("warning: destination for %s is a table. Ignoring non-table value %v", key, val)
+		}
+	}
+	return dst
+}
+
+// istable is a special-purpose function to see if the present thing matches the definition of a YAML table.
+func istable(v interface{}) bool {
+	_, ok := v.(map[string]interface{})
+	return ok
 }
