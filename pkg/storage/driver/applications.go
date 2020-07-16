@@ -25,57 +25,57 @@ import (
 	"github.com/pkg/errors"
 	rspb "helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
-	v1 "k8s.io/api/core/v1"
+	"sigs.k8s.io/application/api/app/v1beta1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kblabels "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/validation"
-	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
+	cs "sigs.k8s.io/application/client/clientset/versioned/typed/app/v1beta1"
 )
 
-var _ driver.Driver = (*ConfigMaps)(nil)
+var _ driver.Driver = (*Applications)(nil)
 
-// ConfigMapsDriverName is the string name of the driver.
-const ConfigMapsDriverName = "ConfigMap"
+// ApplicationsDriverName is the string name of the driver.
+const ApplicationsDriverName = "Application"
 
-// ConfigMaps is a wrapper around an implementation of a kubernetes
-// ConfigMapsInterface.
-type ConfigMaps struct {
-	impl corev1.ConfigMapInterface
+// Applications is a wrapper around an implementation of a kubernetes
+// ApplicationsInterface.
+type Applications struct {
+	impl cs.ApplicationInterface
 	Log  func(string, ...interface{})
 }
 
-// NewConfigMaps initializes a new ConfigMaps wrapping an implementation of
-// the kubernetes ConfigMapsInterface.
-func NewConfigMaps(impl corev1.ConfigMapInterface) *ConfigMaps {
-	return &ConfigMaps{
+// NewApplications initializes a new Applications wrapping an implementation of
+// the kubernetes ApplicationsInterface.
+func NewApplications(impl cs.ApplicationInterface) *Applications {
+	return &Applications{
 		impl: impl,
 		Log:  func(_ string, _ ...interface{}) {},
 	}
 }
 
 // Name returns the name of the driver.
-func (cfgmaps *ConfigMaps) Name() string {
-	return ConfigMapsDriverName
+func (apps *Applications) Name() string {
+	return ApplicationsDriverName
 }
 
 // Get fetches the release named by key. The corresponding release is returned
 // or error if not found.
-func (cfgmaps *ConfigMaps) Get(key string) (*rspb.Release, error) {
+func (apps *Applications) Get(key string) (*rspb.Release, error) {
 	// fetch the configmap holding the release named by key
-	obj, err := cfgmaps.impl.Get(context.Background(), key, metav1.GetOptions{})
+	obj, err := apps.impl.Get(context.Background(), key, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			return nil, driver.ErrReleaseNotFound
 		}
 
-		cfgmaps.Log("get: failed to get %q: %s", key, err)
+		apps.Log("get: failed to get %q: %s", key, err)
 		return nil, err
 	}
 	// found the configmap, decode the base64 data string
 	r, err := decodeRelease(obj.Data["release"])
 	if err != nil {
-		cfgmaps.Log("get: failed to decode data %q: %s", key, err)
+		apps.Log("get: failed to decode data %q: %s", key, err)
 		return nil, err
 	}
 	// return the release object
@@ -85,13 +85,13 @@ func (cfgmaps *ConfigMaps) Get(key string) (*rspb.Release, error) {
 // List fetches all releases and returns the list releases such
 // that filter(release) == true. An error is returned if the
 // configmap fails to retrieve the releases.
-func (cfgmaps *ConfigMaps) List(filter func(*rspb.Release) bool) ([]*rspb.Release, error) {
+func (apps *Applications) List(filter func(*rspb.Release) bool) ([]*rspb.Release, error) {
 	lsel := kblabels.Set{"owner": "helm"}.AsSelector()
 	opts := metav1.ListOptions{LabelSelector: lsel.String()}
 
-	list, err := cfgmaps.impl.List(context.Background(), opts)
+	list, err := apps.impl.List(context.Background(), opts)
 	if err != nil {
-		cfgmaps.Log("list: failed to list: %s", err)
+		apps.Log("list: failed to list: %s", err)
 		return nil, err
 	}
 
@@ -102,7 +102,7 @@ func (cfgmaps *ConfigMaps) List(filter func(*rspb.Release) bool) ([]*rspb.Releas
 	for _, item := range list.Items {
 		rls, err := decodeRelease(item.Data["release"])
 		if err != nil {
-			cfgmaps.Log("list: failed to decode release: %v: %s", item, err)
+			apps.Log("list: failed to decode release: %v: %s", item, err)
 			continue
 		}
 		if filter(rls) {
@@ -114,7 +114,7 @@ func (cfgmaps *ConfigMaps) List(filter func(*rspb.Release) bool) ([]*rspb.Releas
 
 // Query fetches all releases that match the provided map of labels.
 // An error is returned if the configmap fails to retrieve the releases.
-func (cfgmaps *ConfigMaps) Query(labels map[string]string) ([]*rspb.Release, error) {
+func (apps *Applications) Query(labels map[string]string) ([]*rspb.Release, error) {
 	ls := kblabels.Set{}
 	for k, v := range labels {
 		if errs := validation.IsValidLabelValue(v); len(errs) != 0 {
@@ -125,9 +125,9 @@ func (cfgmaps *ConfigMaps) Query(labels map[string]string) ([]*rspb.Release, err
 
 	opts := metav1.ListOptions{LabelSelector: ls.AsSelector().String()}
 
-	list, err := cfgmaps.impl.List(context.Background(), opts)
+	list, err := apps.impl.List(context.Background(), opts)
 	if err != nil {
-		cfgmaps.Log("query: failed to query with labels: %s", err)
+		apps.Log("query: failed to query with labels: %s", err)
 		return nil, err
 	}
 
@@ -139,7 +139,7 @@ func (cfgmaps *ConfigMaps) Query(labels map[string]string) ([]*rspb.Release, err
 	for _, item := range list.Items {
 		rls, err := decodeRelease(item.Data["release"])
 		if err != nil {
-			cfgmaps.Log("query: failed to decode release: %s", err)
+			apps.Log("query: failed to decode release: %s", err)
 			continue
 		}
 		results = append(results, rls)
@@ -147,9 +147,9 @@ func (cfgmaps *ConfigMaps) Query(labels map[string]string) ([]*rspb.Release, err
 	return results, nil
 }
 
-// Create creates a new ConfigMap holding the release. If the
-// ConfigMap already exists, ErrReleaseExists is returned.
-func (cfgmaps *ConfigMaps) Create(key string, rls *rspb.Release) error {
+// Create creates a new Application holding the release. If the
+// Application already exists, ErrReleaseExists is returned.
+func (apps *Applications) Create(key string, rls *rspb.Release) error {
 	// set labels for configmaps object meta data
 	var lbs labels
 
@@ -157,26 +157,26 @@ func (cfgmaps *ConfigMaps) Create(key string, rls *rspb.Release) error {
 	lbs.set("createdAt", strconv.Itoa(int(time.Now().Unix())))
 
 	// create a new configmap to hold the release
-	obj, err := newConfigMapsObject(key, rls, lbs)
+	obj, err := newApplicationsObject(key, rls, lbs)
 	if err != nil {
-		cfgmaps.Log("create: failed to encode release %q: %s", rls.Name, err)
+		apps.Log("create: failed to encode release %q: %s", rls.Name, err)
 		return err
 	}
 	// push the configmap object out into the kubiverse
-	if _, err := cfgmaps.impl.Create(context.Background(), obj, metav1.CreateOptions{}); err != nil {
+	if _, err := apps.impl.Create(context.Background(), obj, metav1.CreateOptions{}); err != nil {
 		if apierrors.IsAlreadyExists(err) {
 			return driver.ErrReleaseExists
 		}
 
-		cfgmaps.Log("create: failed to create: %s", err)
+		apps.Log("create: failed to create: %s", err)
 		return err
 	}
 	return nil
 }
 
-// Update updates the ConfigMap holding the release. If not found
-// the ConfigMap is created to hold the release.
-func (cfgmaps *ConfigMaps) Update(key string, rls *rspb.Release) error {
+// Update updates the Application holding the release. If not found
+// the Application is created to hold the release.
+func (apps *Applications) Update(key string, rls *rspb.Release) error {
 	// set labels for configmaps object meta data
 	var lbs labels
 
@@ -184,34 +184,34 @@ func (cfgmaps *ConfigMaps) Update(key string, rls *rspb.Release) error {
 	lbs.set("modifiedAt", strconv.Itoa(int(time.Now().Unix())))
 
 	// create a new configmap object to hold the release
-	obj, err := newConfigMapsObject(key, rls, lbs)
+	obj, err := newApplicationsObject(key, rls, lbs)
 	if err != nil {
-		cfgmaps.Log("update: failed to encode release %q: %s", rls.Name, err)
+		apps.Log("update: failed to encode release %q: %s", rls.Name, err)
 		return err
 	}
 	// push the configmap object out into the kubiverse
-	_, err = cfgmaps.impl.Update(context.Background(), obj, metav1.UpdateOptions{})
+	_, err = apps.impl.Update(context.Background(), obj, metav1.UpdateOptions{})
 	if err != nil {
-		cfgmaps.Log("update: failed to update: %s", err)
+		apps.Log("update: failed to update: %s", err)
 		return err
 	}
 	return nil
 }
 
-// Delete deletes the ConfigMap holding the release named by key.
-func (cfgmaps *ConfigMaps) Delete(key string) (rls *rspb.Release, err error) {
+// Delete deletes the Application holding the release named by key.
+func (apps *Applications) Delete(key string) (rls *rspb.Release, err error) {
 	// fetch the release to check existence
-	if rls, err = cfgmaps.Get(key); err != nil {
+	if rls, err = apps.Get(key); err != nil {
 		return nil, err
 	}
 	// delete the release
-	if err = cfgmaps.impl.Delete(context.Background(), key, metav1.DeleteOptions{}); err != nil {
+	if err = apps.impl.Delete(context.Background(), key, metav1.DeleteOptions{}); err != nil {
 		return rls, err
 	}
 	return rls, nil
 }
 
-// newConfigMapsObject constructs a kubernetes ConfigMap object
+// newApplicationsObject constructs a kubernetes Application object
 // to store a release. Each configmap data entry is the base64
 // encoded gzipped string of a release.
 //
@@ -224,7 +224,7 @@ func (cfgmaps *ConfigMaps) Delete(key string) (rls *rspb.Release, err error) {
 //    "owner"          - owner of the configmap, currently "helm".
 //    "name"           - name of the release.
 //
-func newConfigMapsObject(key string, rls *rspb.Release, lbs labels) (*v1.ConfigMap, error) {
+func newApplicationsObject(key string, rls *rspb.Release, lbs labels) (*v1beta1.Application, error) {
 	const owner = "helm"
 
 	// encode the release
@@ -244,7 +244,7 @@ func newConfigMapsObject(key string, rls *rspb.Release, lbs labels) (*v1.ConfigM
 	lbs.set("version", strconv.Itoa(rls.Version))
 
 	// create and return configmap object
-	return &v1.ConfigMap{
+	return &v1beta1.Application{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   key,
 			Labels: lbs.toMap(),

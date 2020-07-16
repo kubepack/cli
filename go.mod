@@ -22,6 +22,7 @@ require (
 	k8s.io/kubectl v0.18.5
 	k8s.io/utils v0.0.0-20200324210504-a9aa75ae1b89
 	kmodules.xyz/client-go v0.0.0-20200630053911-20d035822d35
+	sigs.k8s.io/application v0.0.0-00010101000000-000000000000
 	sigs.k8s.io/yaml v1.2.0
 )
 
