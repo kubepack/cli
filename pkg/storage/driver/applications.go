@@ -17,11 +17,19 @@ limitations under the License.
 package driver // import "helm.sh/helm/v3/pkg/storage/driver"
 
 import (
+	"bytes"
 	"context"
+	"github.com/gabriel-vasile/mimetype"
+	"io"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/util/yaml"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
-
+	"kubepack.dev/kubepack/apis/kubepack/v1alpha1"
 	"github.com/pkg/errors"
 	rspb "helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
@@ -244,11 +252,128 @@ func newApplicationsObject(key string, rls *rspb.Release, lbs labels) (*v1beta1.
 	lbs.set("version", strconv.Itoa(rls.Version))
 
 	// create and return configmap object
-	return &v1beta1.Application{
+	obj := &v1beta1.Application{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   key,
 			Labels: lbs.toMap(),
 		},
+		Spec: v1beta1.ApplicationSpec{
+			Descriptor: v1beta1.Descriptor{
+				Type:        rls.Chart.Metadata.Type,
+				Version:     rls.Chart.Metadata.AppVersion,
+				Description: rls.Chart.Metadata.Description,
+				Owners:      nil, // FIX
+				Keywords:    rls.Chart.Metadata.Keywords,
+				Links: []v1beta1.Link{
+					{
+						Description: string(v1alpha1.LinkWebsite),
+						URL:         rls.Chart.Metadata.Home,
+					},
+				},
+				Notes: rls.Info.Notes,
+			},
+			ComponentGroupKinds: nil,
+			Selector: &metav1.LabelSelector{
+				MatchLabels: map[string]string{
+
+				},
+			},
+			AddOwnerRef:   true, // false
+			Info:          nil,
+			AssemblyPhase: v1beta1.Pending,
+		},
+
+
 		Data: map[string]string{"release": s},
-	}, nil
+	}
+	if rls.Chart.Metadata.Icon != "" {
+		var imgType string
+		if resp, err := http.Get(rls.Chart.Metadata.Icon); err == nil {
+			if mime, err := mimetype.DetectReader(resp.Body); err == nil {
+				imgType = mime.String()
+			}
+			_ = resp.Body.Close()
+		}
+		obj.Spec.Descriptor.Icons = []v1beta1.ImageSpec{
+			{
+				Source: rls.Chart.Metadata.Icon,
+				// TotalSize: "",
+				Type: imgType,
+			},
+		}
+	}
+	for _, maintainer := range rls.Chart.Metadata.Maintainers {
+		obj.Spec.Descriptor.Maintainers = append(obj.Spec.Descriptor.Maintainers, v1beta1.ContactData{
+			Name:  maintainer.Name,
+			URL:   maintainer.URL,
+			Email: maintainer.Email,
+		})
+	}
+
+	var components   map[metav1.GroupKind]struct{}
+	var commonLabels map[string]string
+
+	// Hooks ?
+	err = extractComponents(rls.Manifest, components, commonLabels)
+	if err != nil {
+		return nil, err
+	}
+	return obj, nil
+}
+
+var empty = struct {}{}
+
+func extractComponents(data string, components   map[metav1.GroupKind]struct{}, commonLabels map[string]string) error {
+	reader := yaml.NewYAMLOrJSONDecoder(strings.NewReader(data), 2048)
+	for {
+		var obj unstructured.Unstructured
+		err := reader.Decode(&obj)
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			return err
+		}
+		if obj.IsList() {
+			err := obj.EachListItem(func(item runtime.Object) error {
+				castItem := item.(*unstructured.Unstructured)
+
+				gv, err := schema.ParseGroupVersion(castItem.GetAPIVersion())
+				if err != nil {
+					return err
+				}
+				components[metav1.GroupKind{Group: gv.Group, Kind: castItem.GetKind()}] = empty
+
+				if commonLabels == nil {
+					commonLabels = castItem.GetLabels()
+				} else {
+					for k, v := range castItem.GetLabels() {
+						if existing, found := commonLabels[k]; found && existing != v {
+							delete(commonLabels, k)
+						}
+					}
+				}
+				return nil
+			})
+			if err != nil {
+				return err
+			}
+		} else {
+			gv, err := schema.ParseGroupVersion(obj.GetAPIVersion())
+			if err != nil {
+				return err
+			}
+			components[metav1.GroupKind{Group: gv.Group, Kind: obj.GetKind()}] = empty
+
+			if commonLabels == nil {
+				commonLabels = obj.GetLabels()
+			} else {
+				for k, v := range obj.GetLabels() {
+					if existing, found := commonLabels[k]; found && existing != v {
+						delete(commonLabels, k)
+					}
+				}
+			}
+		}
+	}
+	return nil
 }
