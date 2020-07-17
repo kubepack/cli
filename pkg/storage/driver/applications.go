@@ -332,7 +332,7 @@ func newApplicationsObject(_ string, rls *rspb.Release, lbs labels) (*v1beta1.Ap
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{},
 			},
-			AddOwnerRef:   true, // false
+			AddOwnerRef:   true, // TODO
 			Info:          []v1beta1.InfoItem{
 				{
 					Name:      "values",
