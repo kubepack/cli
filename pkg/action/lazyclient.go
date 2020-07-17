@@ -18,9 +18,6 @@ package action
 
 import (
 	"context"
-	appcs "sigs.k8s.io/application/client/clientset/versioned"
-	appapi "sigs.k8s.io/application/api/app/v1beta1"
-	"sigs.k8s.io/application/client/clientset/versioned/typed/app/v1beta1"
 	"sync"
 
 	v1 "k8s.io/api/core/v1"
@@ -29,6 +26,9 @@ import (
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/kubernetes"
 	corev1 "k8s.io/client-go/kubernetes/typed/core/v1"
+	appapi "sigs.k8s.io/application/api/app/v1beta1"
+	appcs "sigs.k8s.io/application/client/clientset/versioned"
+	"sigs.k8s.io/application/client/clientset/versioned/typed/app/v1beta1"
 )
 
 // lazyClient is a workaround to deal with Kubernetes having an unstable client API.
@@ -42,7 +42,7 @@ type lazyClient struct {
 	clientErr  error
 
 	// clientFn loads a kubernetes client
-	clientFn func() (*kubernetes.Clientset, error)
+	clientFn    func() (*kubernetes.Clientset, error)
 	appClientFn func() (*appcs.Clientset, error)
 
 	// namespace passed to each client request
@@ -186,30 +186,6 @@ func (c *configMapClient) Patch(ctx context.Context, name string, pt types.Patch
 	}
 	return c.client.CoreV1().ConfigMaps(c.namespace).Patch(ctx, name, pt, data, opts, subresources...)
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // applicationClient implements a coreappv1beta1.ApplicationInterface
 type applicationClient struct{ *lazyClient }

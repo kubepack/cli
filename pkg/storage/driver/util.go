@@ -19,13 +19,14 @@ package driver // import "helm.sh/helm/v3/pkg/storage/driver"
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
+
 	"kubepack.dev/kubepack/apis"
 	"kubepack.dev/kubepack/apis/kubepack/v1alpha1"
 	"kubepack.dev/kubepack/pkg/lib"
-	"sigs.k8s.io/application/api/app/v1beta1"
-	"strconv"
 
 	rspb "helm.sh/helm/v3/pkg/release"
+	"sigs.k8s.io/application/api/app/v1beta1"
 )
 
 // decodeRelease decodes the bytes of data into a release
@@ -53,7 +54,6 @@ func decodeRelease(app *v1beta1.Application) (*rspb.Release, error) {
 		return nil, err
 	}
 	rls.Chart = chrt.Chart
-
 
 	return &rls, nil
 }

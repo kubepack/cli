@@ -19,11 +19,7 @@ package driver // import "helm.sh/helm/v3/pkg/storage/driver"
 import (
 	"context"
 	"encoding/json"
-	"helm.sh/helm/v3/pkg/chart"
 	"io"
-	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
-	"kubepack.dev/kubepack/apis"
 	"log"
 	"net/http"
 	"sort"
@@ -31,12 +27,15 @@ import (
 	"strings"
 	"time"
 
+	"kubepack.dev/kubepack/apis"
 	"kubepack.dev/kubepack/apis/kubepack/v1alpha1"
 
 	"github.com/gabriel-vasile/mimetype"
 	"github.com/pkg/errors"
+	"helm.sh/helm/v3/pkg/chart"
 	rspb "helm.sh/helm/v3/pkg/release"
 	"helm.sh/helm/v3/pkg/storage/driver"
+	corev1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -45,6 +44,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/validation"
 	"k8s.io/apimachinery/pkg/util/yaml"
+	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"sigs.k8s.io/application/api/app/v1beta1"
 	cs "sigs.k8s.io/application/client/clientset/versioned/typed/app/v1beta1"
 )
@@ -57,18 +57,18 @@ const ApplicationsDriverName = "Application"
 // Applications is a wrapper around an implementation of a kubernetes
 // ApplicationsInterface.
 type Applications struct {
-	appClient cs.ApplicationInterface
+	appClient    cs.ApplicationInterface
 	secretClient v1.SecretInterface
-	Log func(string, ...interface{})
+	Log          func(string, ...interface{})
 }
 
 // NewApplications initializes a new Applications wrapping an implementation of
 // the kubernetes ApplicationsInterface.
 func NewApplications(appClient cs.ApplicationInterface, secretClient v1.SecretInterface) *Applications {
 	return &Applications{
-		appClient: appClient,
-		secretClient : secretClient,
-		Log:       func(_ string, _ ...interface{}) {},
+		appClient:    appClient,
+		secretClient: secretClient,
+		Log:          func(_ string, _ ...interface{}) {},
 	}
 }
 
@@ -175,7 +175,7 @@ func (apps *Applications) Create(key string, rls *rspb.Release) error {
 	lbs.set("createdAt", strconv.Itoa(int(time.Now().Unix())))
 
 	// create a new configmap to hold the release
-	obj, values,  err := newApplicationsObject(key, rls, lbs)
+	obj, values, err := newApplicationsObject(key, rls, lbs)
 	if err != nil {
 		apps.Log("create: failed to encode release %q: %s", rls.Name, err)
 		return err
@@ -292,7 +292,7 @@ func newApplicationsObject(_ string, rls *rspb.Release, lbs labels) (*v1beta1.Ap
 		},
 		// Bundle: x.Chart.Bundle,
 		Chart: v1alpha1.ChartRepoRef{
-			Name:    rls.Chart.Metadata.Name,
+			Name: rls.Chart.Metadata.Name,
 			// URL:     rls.Chart.Metadata.Sources[0],
 			Version: rls.Chart.Metadata.Version,
 		},
@@ -306,9 +306,9 @@ func newApplicationsObject(_ string, rls *rspb.Release, lbs labels) (*v1beta1.Ap
 	// create and return configmap object
 	obj := &v1beta1.Application{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:   rls.Name,
+			Name:      rls.Name,
 			Namespace: rls.Namespace,
-			Labels: lbs.toMap(),
+			Labels:    lbs.toMap(),
 			Annotations: map[string]string{
 				apis.LabelPackage: string(data),
 			},
@@ -332,20 +332,20 @@ func newApplicationsObject(_ string, rls *rspb.Release, lbs labels) (*v1beta1.Ap
 			Selector: &metav1.LabelSelector{
 				MatchLabels: map[string]string{},
 			},
-			AddOwnerRef:   true, // TODO
-			Info:          []v1beta1.InfoItem{
+			AddOwnerRef: true, // TODO
+			Info: []v1beta1.InfoItem{
 				{
-					Name:      "values",
-					Type:      v1beta1.ReferenceInfoItemType,
-					Value:     "",
+					Name:  "values",
+					Type:  v1beta1.ReferenceInfoItemType,
+					Value: "",
 					ValueFrom: &v1beta1.InfoItemSource{
-						Type:            v1beta1.SecretKeyRefInfoItemSourceType,
-						SecretKeyRef:    &v1beta1.SecretKeySelector{
+						Type: v1beta1.SecretKeyRefInfoItemSourceType,
+						SecretKeyRef: &v1beta1.SecretKeySelector{
 							ObjectReference: corev1.ObjectReference{
-								Namespace:       vs.Namespace,
-								Name:            vs.Name,
+								Namespace: vs.Namespace,
+								Name:      vs.Name,
 							},
-							Key:             "values",
+							Key: "values",
 						},
 					},
 				},
@@ -446,7 +446,7 @@ func extractComponents(data string, components map[metav1.GroupKind]struct{}, co
 		} else {
 			gv, err := schema.ParseGroupVersion(obj.GetAPIVersion())
 			if err != nil {
-				return  components, commonLabels,err
+				return components, commonLabels, err
 			}
 			components[metav1.GroupKind{Group: gv.Group, Kind: obj.GetKind()}] = empty
 
@@ -461,7 +461,7 @@ func extractComponents(data string, components map[metav1.GroupKind]struct{}, co
 			}
 		}
 	}
-	return  components, commonLabels,nil
+	return components, commonLabels, nil
 }
 
 func copyMap(src map[string]interface{}) map[string]interface{} {
