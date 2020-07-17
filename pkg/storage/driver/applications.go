@@ -19,9 +19,10 @@ package driver // import "helm.sh/helm/v3/pkg/storage/driver"
 import (
 	"context"
 	"encoding/json"
-	chart "helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/chart"
 	"io"
 	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"kubepack.dev/kubepack/apis"
 	"log"
 	"net/http"
@@ -56,16 +57,18 @@ const ApplicationsDriverName = "Application"
 // Applications is a wrapper around an implementation of a kubernetes
 // ApplicationsInterface.
 type Applications struct {
-	impl cs.ApplicationInterface
-	Log  func(string, ...interface{})
+	appClient cs.ApplicationInterface
+	secretClient v1.SecretInterface
+	Log func(string, ...interface{})
 }
 
 // NewApplications initializes a new Applications wrapping an implementation of
 // the kubernetes ApplicationsInterface.
-func NewApplications(impl cs.ApplicationInterface) *Applications {
+func NewApplications(appClient cs.ApplicationInterface, secretClient v1.SecretInterface) *Applications {
 	return &Applications{
-		impl: impl,
-		Log:  func(_ string, _ ...interface{}) {},
+		appClient: appClient,
+		secretClient : secretClient,
+		Log:       func(_ string, _ ...interface{}) {},
 	}
 }
 
@@ -78,7 +81,7 @@ func (apps *Applications) Name() string {
 // or error if not found.
 func (apps *Applications) Get(key string) (*rspb.Release, error) {
 	// fetch the configmap holding the release named by key
-	obj, err := apps.impl.Get(context.Background(), key, metav1.GetOptions{})
+	obj, err := apps.appClient.Get(context.Background(), key, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			return nil, driver.ErrReleaseNotFound
@@ -104,7 +107,7 @@ func (apps *Applications) List(filter func(*rspb.Release) bool) ([]*rspb.Release
 	lsel := kblabels.Set{"owner": "helm"}.AsSelector()
 	opts := metav1.ListOptions{LabelSelector: lsel.String()}
 
-	list, err := apps.impl.List(context.Background(), opts)
+	list, err := apps.appClient.List(context.Background(), opts)
 	if err != nil {
 		apps.Log("list: failed to list: %s", err)
 		return nil, err
@@ -140,7 +143,7 @@ func (apps *Applications) Query(labels map[string]string) ([]*rspb.Release, erro
 
 	opts := metav1.ListOptions{LabelSelector: ls.AsSelector().String()}
 
-	list, err := apps.impl.List(context.Background(), opts)
+	list, err := apps.appClient.List(context.Background(), opts)
 	if err != nil {
 		apps.Log("query: failed to query with labels: %s", err)
 		return nil, err
@@ -172,13 +175,21 @@ func (apps *Applications) Create(key string, rls *rspb.Release) error {
 	lbs.set("createdAt", strconv.Itoa(int(time.Now().Unix())))
 
 	// create a new configmap to hold the release
-	obj, err := newApplicationsObject(key, rls, lbs)
+	obj, values,  err := newApplicationsObject(key, rls, lbs)
 	if err != nil {
 		apps.Log("create: failed to encode release %q: %s", rls.Name, err)
 		return err
 	}
 	// push the configmap object out into the kubiverse
-	if _, err := apps.impl.Create(context.Background(), obj, metav1.CreateOptions{}); err != nil {
+	if _, err := apps.appClient.Create(context.Background(), obj, metav1.CreateOptions{}); err != nil {
+		if apierrors.IsAlreadyExists(err) {
+			return driver.ErrReleaseExists
+		}
+
+		apps.Log("create: failed to create: %s", err)
+		return err
+	}
+	if _, err := apps.secretClient.Create(context.Background(), values, metav1.CreateOptions{}); err != nil {
 		if apierrors.IsAlreadyExists(err) {
 			return driver.ErrReleaseExists
 		}
@@ -199,13 +210,18 @@ func (apps *Applications) Update(key string, rls *rspb.Release) error {
 	lbs.set("modifiedAt", strconv.Itoa(int(time.Now().Unix())))
 
 	// create a new configmap object to hold the release
-	obj, err := newApplicationsObject(key, rls, lbs)
+	obj, values, err := newApplicationsObject(key, rls, lbs)
 	if err != nil {
 		apps.Log("update: failed to encode release %q: %s", rls.Name, err)
 		return err
 	}
 	// push the configmap object out into the kubiverse
-	_, err = apps.impl.Update(context.Background(), obj, metav1.UpdateOptions{})
+	_, err = apps.appClient.Update(context.Background(), obj, metav1.UpdateOptions{})
+	if err != nil {
+		apps.Log("update: failed to update: %s", err)
+		return err
+	}
+	_, err = apps.secretClient.Update(context.Background(), values, metav1.UpdateOptions{})
 	if err != nil {
 		apps.Log("update: failed to update: %s", err)
 		return err
@@ -220,7 +236,7 @@ func (apps *Applications) Delete(key string) (rls *rspb.Release, err error) {
 		return nil, err
 	}
 	// delete the release
-	if err = apps.impl.Delete(context.Background(), key, metav1.DeleteOptions{}); err != nil {
+	if err = apps.appClient.Delete(context.Background(), key, metav1.DeleteOptions{}); err != nil {
 		return rls, err
 	}
 	return rls, nil
@@ -239,7 +255,7 @@ func (apps *Applications) Delete(key string) (rls *rspb.Release, err error) {
 //    "owner"          - owner of the configmap, currently "helm".
 //    "name"           - name of the release.
 //
-func newApplicationsObject(key string, rls *rspb.Release, lbs labels) (*v1beta1.Application, error) {
+func newApplicationsObject(key string, rls *rspb.Release, lbs labels) (*v1beta1.Application, *corev1.Secret, error) {
 	const owner = "helm"
 
 	if lbs == nil {
@@ -254,7 +270,7 @@ func newApplicationsObject(key string, rls *rspb.Release, lbs labels) (*v1beta1.
 
 	values, err := json.Marshal(rls.Config)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	vs := &corev1.Secret{
@@ -268,8 +284,6 @@ func newApplicationsObject(key string, rls *rspb.Release, lbs labels) (*v1beta1.
 		},
 		Type: "kubepack.com/helm-values",
 	}
-// TODO: create this secret
-
 
 	p := v1alpha1.ApplicationPackage{
 		TypeMeta: metav1.TypeMeta{
@@ -369,7 +383,7 @@ func newApplicationsObject(key string, rls *rspb.Release, lbs labels) (*v1beta1.
 	// Hooks ?
 	components, commonLabels, err = extractComponents(rls.Manifest, components, commonLabels)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
 	gks := make([]metav1.GroupKind, 0, len(components))
@@ -390,7 +404,7 @@ func newApplicationsObject(key string, rls *rspb.Release, lbs labels) (*v1beta1.
 		}
 	}
 
-	return obj, nil
+	return obj, vs, nil
 }
 
 var empty = struct{}{}
