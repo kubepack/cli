@@ -293,7 +293,7 @@ func newApplicationsObject(key string, rls *rspb.Release, lbs labels) (*v1beta1.
 		// Bundle: x.Chart.Bundle,
 		Chart: v1alpha1.ChartRepoRef{
 			Name:    rls.Chart.Metadata.Name,
-			URL:     rls.Chart.Metadata.Sources[0],
+			// URL:     rls.Chart.Metadata.Sources[0],
 			Version: rls.Chart.Metadata.Version,
 		},
 		Channel: v1alpha1.RegularChannel,
@@ -377,7 +377,7 @@ func newApplicationsObject(key string, rls *rspb.Release, lbs labels) (*v1beta1.
 		})
 	}
 
-	var components map[metav1.GroupKind]struct{}
+	components := map[metav1.GroupKind]struct{}{}
 	var commonLabels map[string]string
 
 	// Hooks ?

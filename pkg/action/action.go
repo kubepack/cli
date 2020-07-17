@@ -19,10 +19,12 @@ package action
 import (
 	"bytes"
 	"fmt"
+	driver2 "kubepack.dev/cli/pkg/storage/driver"
 	"os"
 	"path"
 	"path/filepath"
 	"regexp"
+	appcs "sigs.k8s.io/application/client/clientset/versioned"
 	"strings"
 
 	"github.com/pkg/errors"
@@ -358,6 +360,13 @@ func (c *Configuration) Init(getter genericclioptions.RESTClientGetter, namespac
 	lazyClient := &lazyClient{
 		namespace: namespace,
 		clientFn:  kc.Factory.KubernetesClientSet,
+		appClientFn: func() (*appcs.Clientset, error) {
+			config, err := kc.Factory.ToRawKubeConfigLoader().ClientConfig()
+			if err != nil {
+				return nil, err
+			}
+			return appcs.NewForConfig(config)
+		},
 	}
 
 	var store *storage.Storage
@@ -368,6 +377,10 @@ func (c *Configuration) Init(getter genericclioptions.RESTClientGetter, namespac
 		store = storage.Init(d)
 	case "configmap", "configmaps":
 		d := driver.NewConfigMaps(newConfigMapClient(lazyClient))
+		d.Log = log
+		store = storage.Init(d)
+	case "app", "apps", "application", "applications":
+		d := driver2.NewApplications(newApplicationClient(lazyClient), newSecretClient(lazyClient))
 		d.Log = log
 		store = storage.Init(d)
 	case "memory":
