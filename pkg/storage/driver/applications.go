@@ -255,7 +255,7 @@ func (apps *Applications) Delete(key string) (rls *rspb.Release, err error) {
 //    "owner"          - owner of the configmap, currently "helm".
 //    "name"           - name of the release.
 //
-func newApplicationsObject(key string, rls *rspb.Release, lbs labels) (*v1beta1.Application, *corev1.Secret, error) {
+func newApplicationsObject(_ string, rls *rspb.Release, lbs labels) (*v1beta1.Application, *corev1.Secret, error) {
 	const owner = "helm"
 
 	if lbs == nil {
@@ -275,7 +275,7 @@ func newApplicationsObject(key string, rls *rspb.Release, lbs labels) (*v1beta1.
 
 	vs := &corev1.Secret{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:      key,
+			Name:      rls.Name,
 			Namespace: rls.Namespace,
 		},
 		Immutable: nil,
@@ -306,7 +306,7 @@ func newApplicationsObject(key string, rls *rspb.Release, lbs labels) (*v1beta1.
 	// create and return configmap object
 	obj := &v1beta1.Application{
 		ObjectMeta: metav1.ObjectMeta{
-			Name:   key,
+			Name:   rls.Name,
 			Namespace: rls.Namespace,
 			Labels: lbs.toMap(),
 			Annotations: map[string]string{

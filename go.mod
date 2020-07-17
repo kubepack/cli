@@ -24,7 +24,6 @@ require (
 	k8s.io/utils v0.0.0-20200324210504-a9aa75ae1b89
 	kmodules.xyz/client-go v0.0.0-20200714060506-0b57b4060595
 	kubepack.dev/kubepack v0.2.2-0.20200717005537-00a7dd88be22
-	kubepack.dev/lib-helm v0.2.0
 	sigs.k8s.io/application v0.8.2-0.20200306235134-f10d9ca8abd4
 	sigs.k8s.io/yaml v1.2.0
 )
