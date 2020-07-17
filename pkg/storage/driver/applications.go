@@ -22,6 +22,7 @@ import (
 	chart "helm.sh/helm/v3/pkg/chart"
 	"io"
 	corev1 "k8s.io/api/core/v1"
+	"kubepack.dev/kubepack/apis"
 	"log"
 	"net/http"
 	"sort"
@@ -87,7 +88,7 @@ func (apps *Applications) Get(key string) (*rspb.Release, error) {
 		return nil, err
 	}
 	// found the configmap, decode the base64 data string
-	r, err := decodeRelease(obj.Data["release"])
+	r, err := decodeRelease(obj)
 	if err != nil {
 		apps.Log("get: failed to decode data %q: %s", key, err)
 		return nil, err
@@ -114,7 +115,7 @@ func (apps *Applications) List(filter func(*rspb.Release) bool) ([]*rspb.Release
 	// iterate over the configmaps object list
 	// and decode each release
 	for _, item := range list.Items {
-		rls, err := decodeRelease(item.Data["release"])
+		rls, err := decodeRelease(&item)
 		if err != nil {
 			apps.Log("list: failed to decode release: %v: %s", item, err)
 			continue
@@ -151,7 +152,7 @@ func (apps *Applications) Query(labels map[string]string) ([]*rspb.Release, erro
 
 	var results []*rspb.Release
 	for _, item := range list.Items {
-		rls, err := decodeRelease(item.Data["release"])
+		rls, err := decodeRelease(&item)
 		if err != nil {
 			apps.Log("query: failed to decode release: %s", err)
 			continue
@@ -251,9 +252,7 @@ func newApplicationsObject(key string, rls *rspb.Release, lbs labels) (*v1beta1.
 	lbs.set("status", rls.Info.Status.String())
 	lbs.set("version", strconv.Itoa(rls.Version))
 
-	coalesceValues(rls.Chart, rls.Config)
-
-	values, err := json.Marshal(rls.Chart.Values)
+	values, err := json.Marshal(rls.Config)
 	if err != nil {
 		return nil, err
 	}
@@ -271,12 +270,34 @@ func newApplicationsObject(key string, rls *rspb.Release, lbs labels) (*v1beta1.
 	}
 // TODO: create this secret
 
+
+	p := v1alpha1.ApplicationPackage{
+		TypeMeta: metav1.TypeMeta{
+			APIVersion: v1alpha1.SchemeGroupVersion.String(),
+			Kind:       "ApplicationPackage",
+		},
+		// Bundle: x.Chart.Bundle,
+		Chart: v1alpha1.ChartRepoRef{
+			Name:    rls.Chart.Metadata.Name,
+			URL:     rls.Chart.Metadata.Sources[0],
+			Version: rls.Chart.Metadata.Version,
+		},
+		Channel: v1alpha1.RegularChannel,
+	}
+	data, err := json.Marshal(p)
+	if err != nil {
+		panic(err)
+	}
+
 	// create and return configmap object
 	obj := &v1beta1.Application{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:   key,
 			Namespace: rls.Namespace,
 			Labels: lbs.toMap(),
+			Annotations: map[string]string{
+				apis.LabelPackage: string(data),
+			},
 		},
 		Spec: v1beta1.ApplicationSpec{
 			Descriptor: v1beta1.Descriptor{
