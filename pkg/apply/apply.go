@@ -199,14 +199,14 @@ func (o *ApplyOptions) Complete(f cmdutil.Factory, cmd *cobra.Command) error {
 		return fmt.Errorf("--dry-run=client doesn't work with --server-side (did you mean --dry-run=server instead?)")
 	}
 
-	var deprecatedServerDryRunFlag = cmdutil.GetFlagBool(cmd, "server-dry-run")
-	if o.DryRunStrategy == cmdutil.DryRunClient && deprecatedServerDryRunFlag {
-		return fmt.Errorf("--dry-run=client and --server-dry-run can't be used together (did you mean --dry-run=server instead?)")
-	}
-
-	if o.DryRunStrategy == cmdutil.DryRunNone && deprecatedServerDryRunFlag {
-		o.DryRunStrategy = cmdutil.DryRunServer
-	}
+	//var deprecatedServerDryRunFlag = cmdutil.GetFlagBool(cmd, "server-dry-run")
+	//if o.DryRunStrategy == cmdutil.DryRunClient && deprecatedServerDryRunFlag {
+	//	return fmt.Errorf("--dry-run=client and --server-dry-run can't be used together (did you mean --dry-run=server instead?)")
+	//}
+	//
+	//if o.DryRunStrategy == cmdutil.DryRunNone && deprecatedServerDryRunFlag {
+	//	o.DryRunStrategy = cmdutil.DryRunServer
+	//}
 
 	// allow for a success message operation to be specified at print time
 	o.ToPrinter = func(operation string) (printers.ResourcePrinter, error) {
@@ -216,10 +216,10 @@ func (o *ApplyOptions) Complete(f cmdutil.Factory, cmd *cobra.Command) error {
 	}
 
 	o.DeleteOptions = o.DeleteFlags.ToOptions(o.DynamicClient, o.IOStreams)
-	err = o.DeleteOptions.FilenameOptions.RequireFilenameOrKustomize()
-	if err != nil {
-		return err
-	}
+	//err = o.DeleteOptions.FilenameOptions.RequireFilenameOrKustomize()
+	//if err != nil {
+	//	return err
+	//}
 
 	o.OpenAPISchema, _ = f.OpenAPISchema()
 	o.Validator, err = f.Validator(cmdutil.GetFlagBool(cmd, "validate"))

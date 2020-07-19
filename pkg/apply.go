@@ -19,9 +19,11 @@ package pkg
 import (
 	"fmt"
 	"io"
+	"os"
 	"time"
 
 	"kubepack.dev/cli/pkg/action"
+	"kubepack.dev/cli/pkg/apply"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -34,6 +36,8 @@ import (
 	"helm.sh/helm/v3/pkg/downloader"
 	"helm.sh/helm/v3/pkg/getter"
 	"helm.sh/helm/v3/pkg/release"
+	"k8s.io/cli-runtime/pkg/genericclioptions"
+	cmdutil "k8s.io/kubectl/pkg/cmd/util"
 )
 
 const applyDesc = `
@@ -102,17 +106,28 @@ To see the list of chart repositories, use 'helm repo list'. To search for
 charts in a repository, use 'helm search'.
 `
 
-func newApplyCmd(cfg *action.Configuration, out io.Writer) *cobra.Command {
+func newApplyCmd(cfg *action.Configuration, f cmdutil.Factory, out io.Writer) *cobra.Command {
 	client := action.NewApply(cfg)
 	valueOpts := &values.Options{}
 	var outfmt output.Format
+
+	o := apply.NewApplyOptions(genericclioptions.IOStreams{
+		In:     os.Stdin,
+		Out:    os.Stdout,
+		ErrOut: os.Stderr,
+	})
+	//cmdutil.CheckErr(o.Complete(f, cmd))
+	//cmdutil.CheckErr(o.Run())
 
 	cmd := &cobra.Command{
 		Use:   "apply-chart [NAME] [CHART]",
 		Short: "apply a chart",
 		Long:  applyDesc,
 		Args:  require.MinimumNArgs(1),
-		RunE: func(_ *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cmdutil.CheckErr(o.Complete(f, cmd))
+			client.ApplyOptions = o
+
 			rel, err := runApply(args, client, valueOpts, out)
 			if err != nil {
 				return err
@@ -126,12 +141,28 @@ func newApplyCmd(cfg *action.Configuration, out io.Writer) *cobra.Command {
 	bindOutputFlag(cmd, &outfmt)
 	bindPostRenderFlag(cmd, &client.PostRenderer)
 
+	cmd.Flags().BoolVar(&o.Overwrite, "overwrite", o.Overwrite, "Automatically resolve conflicts between the modified and live configuration by using values from the modified configuration")
+	cmdutil.AddValidateFlags(cmd)
+	cmd.Flags().StringVarP(&o.Selector, "selector", "l", o.Selector, "Selector (label query) to filter on, supports '=', '==', and '!='.(e.g. -l key1=value1,key2=value2)")
+	cmd.Flags().BoolVar(&o.All, "all", o.All, "Select all resources in the namespace of the specified resource types.")
+	cmd.Flags().StringArrayVar(&o.PruneWhitelist, "prune-whitelist", o.PruneWhitelist, "Overwrite the default whitelist with <group/version/kind> for --prune")
+	//cmd.Flags().BoolVar(&o.OpenAPIPatch, "openapi-patch", o.OpenAPIPatch, "If true, use openapi to calculate diff when the openapi presents and the resource can be found in the openapi spec. Otherwise, fall back to use baked-in types.")
+	//cmd.Flags().Bool("server-dry-run", false, "If true, request will be sent to server with dry-run flag, which means the modifications won't be persisted.")
+	//cmd.Flags().MarkDeprecated("server-dry-run", "--server-dry-run is deprecated and can be replaced with --dry-run=server.")
+	//cmd.Flags().MarkHidden("server-dry-run")
+
+
+	cmdutil.AddDryRunFlag(cmd)
+	cmdutil.AddServerSideApplyFlags(cmd)
+
 	return cmd
 }
 
 func addApplyFlags(f *pflag.FlagSet, client *action.Apply, valueOpts *values.Options) {
 	f.BoolVar(&client.CreateNamespace, "create-namespace", false, "create the release namespace if not present")
-	f.BoolVar(&client.DryRun, "dry-run", false, "simulate an apply")
+
+	//TODO: FIX
+	// f.BoolVar(&client.DryRun, "dry-run", false, "simulate an apply")
 	f.BoolVar(&client.DisableHooks, "no-hooks", false, "prevent hooks from running during apply")
 	f.BoolVar(&client.Replace, "replace", false, "re-use the given name, only if that name is a deleted release which remains in the history. This is unsafe in production")
 	f.DurationVar(&client.Timeout, "timeout", 300*time.Second, "time to wait for any individual Kubernetes operation (like Jobs for hooks)")

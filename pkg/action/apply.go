@@ -24,6 +24,8 @@ import (
 	"strings"
 	"time"
 
+	"kubepack.dev/cli/pkg/apply"
+
 	"github.com/pkg/errors"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
@@ -37,13 +39,15 @@ import (
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/cli-runtime/pkg/resource"
 	"sigs.k8s.io/yaml"
 )
 
 // Apply performs an applyation operation.
 type Apply struct {
-	cfg *Configuration
+	ApplyOptions *apply.ApplyOptions
+	cfg          *Configuration
 
 	ChartPathOptions
 
@@ -96,15 +100,30 @@ func (i *Apply) applyCRDs(crds []chart.CRD) error {
 		}
 
 		// Send them to Kube
-		if _, err := i.cfg.KubeClient.Create(res); err != nil {
-			// If the error is CRD already exists, continue.
-			if apierrors.IsAlreadyExists(err) {
-				crdName := res[0].Name
-				i.cfg.Log("CRD %s is already present. Skipping.", crdName)
-				continue
+		errs := []error{}
+		for _, info := range res {
+			if err := i.ApplyOptions.ApplyOneObject(info); err != nil {
+				errs = append(errs, err)
 			}
-			return errors.Wrapf(err, "failed to apply CRD %s", obj.Name)
 		}
+		// If any errors occurred during apply, then return error (or
+		// aggregate of errors).
+		if len(errs) == 1 {
+			return errs[0]
+		}
+		if len(errs) > 1 {
+			return utilerrors.NewAggregate(errs)
+		}
+
+		//if _, err := i.cfg.KubeClient.Create(res); err != nil {
+		//	// If the error is CRD already exists, continue.
+		//	if apierrors.IsAlreadyExists(err) {
+		//		crdName := res[0].Name
+		//		i.cfg.Log("CRD %s is already present. Skipping.", crdName)
+		//		continue
+		//	}
+		//	return errors.Wrapf(err, "failed to apply CRD %s", obj.Name)
+		//}
 		totalItems = append(totalItems, res...)
 	}
 	if len(totalItems) > 0 {
@@ -297,9 +316,25 @@ func (i *Apply) Run(chrt *chart.Chart, vals map[string]interface{}) (*release.Re
 	// do an update, but it's not clear whether we WANT to do an update if the re-use is set
 	// to true, since that is basically an upgrade operation.
 	if len(toBeAdopted) == 0 && len(resources) > 0 {
-		if _, err := i.cfg.KubeClient.Create(resources); err != nil {
-			return i.failRelease(rel, err)
+
+		errs := []error{}
+		for _, info := range resources {
+			if err := i.ApplyOptions.ApplyOneObject(info); err != nil {
+				errs = append(errs, err)
+			}
 		}
+		// If any errors occurred during apply, then return error (or
+		// aggregate of errors).
+		if len(errs) == 1 {
+			return i.failRelease(rel, errs[0])
+		}
+		if len(errs) > 1 {
+			return i.failRelease(rel, utilerrors.NewAggregate(errs))
+		}
+		//if _, err := i.cfg.KubeClient.Create(resources); err != nil {
+		//	return i.failRelease(rel, err)
+		//}
+
 	} else if len(resources) > 0 {
 		if _, err := i.cfg.KubeClient.Update(toBeAdopted, resources, false); err != nil {
 			return i.failRelease(rel, err)

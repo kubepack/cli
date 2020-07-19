@@ -91,7 +91,7 @@ func NewRootCmd() *cobra.Command {
 	if helmDriver == "memory" {
 		loadReleasesInMemory(actionConfig)
 	}
-	rootCmd.AddCommand(newApplyCmd(actionConfig, os.Stdout))
+	rootCmd.AddCommand(newApplyCmd(actionConfig, f, os.Stdout))
 	rootCmd.AddCommand(newListCmd(actionConfig, os.Stdout))
 	rootCmd.AddCommand(newInstallCmd(actionConfig, os.Stdout))
 	rootCmd.AddCommand(newUpgradeCmd(actionConfig, os.Stdout))
