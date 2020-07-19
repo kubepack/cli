@@ -21,30 +21,32 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"helm.sh/helm/v3/pkg/chart"
-	"helm.sh/helm/v3/pkg/release"
-	helmtime "helm.sh/helm/v3/pkg/time"
 	"io"
-	"k8s.io/apimachinery/pkg/api/meta"
-	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/restmapper"
-	"kubepack.dev/kubepack/apis"
-	"kubepack.dev/kubepack/apis/kubepack/v1alpha1"
-	"kubepack.dev/kubepack/pkg/lib"
 	"net/http"
 	"sort"
 	"strconv"
 	"strings"
 	"time"
 
+	"kubepack.dev/kubepack/apis"
+	"kubepack.dev/kubepack/apis/kubepack/v1alpha1"
+	"kubepack.dev/kubepack/pkg/lib"
+
 	"github.com/gabriel-vasile/mimetype"
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/release"
 	rspb "helm.sh/helm/v3/pkg/release"
+	helmtime "helm.sh/helm/v3/pkg/time"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	yu "k8s.io/apimachinery/pkg/util/yaml"
+	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/restmapper"
 	"sigs.k8s.io/application/api/app/v1beta1"
 	"sigs.k8s.io/yaml"
 )
@@ -281,7 +283,7 @@ func extractComponents(data string, components map[metav1.GroupKind]string, comm
 // decodeRelease decodes the bytes of data into a release
 // type. Data must contain a base64 encoded gzipped string of a
 // valid release, otherwise an error is returned.
-func decodeReleaseFromApp(app *v1beta1.Application, di dynamic.Interface) (*rspb.Release, error) {
+func decodeReleaseFromApp(app *v1beta1.Application, di dynamic.Interface, cl discovery.CachedDiscoveryInterface) (*rspb.Release, error) {
 	var rls rspb.Release
 
 	rls.Name = app.Labels["name"]
@@ -322,7 +324,7 @@ func decodeReleaseFromApp(app *v1beta1.Application, di dynamic.Interface) (*rspb
 
 	versions := strings.Split(app.Annotations["helm.sh/component-versions"], ",")
 
-	mapper := restmapper.NewDeferredDiscoveryRESTMapper(nil)
+	mapper := restmapper.NewDeferredDiscoveryRESTMapper(cl)
 	for i, gk := range app.Spec.ComponentGroupKinds {
 		mapping, err := mapper.RESTMapping(schema.GroupKind{
 			Group: gk.Group,
@@ -368,7 +370,7 @@ func decodeReleaseFromApp(app *v1beta1.Application, di dynamic.Interface) (*rspb
 		if rls.Chart == nil {
 			rls.Chart = &chart.Chart{}
 		}
-		rls.Chart.Values= values
+		rls.Chart.Values = values
 		rls.Config = map[string]interface{}{}
 	}
 

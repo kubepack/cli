@@ -18,7 +18,6 @@ package driver
 
 import (
 	"context"
-	"k8s.io/client-go/dynamic"
 	"strconv"
 	"strings"
 	"time"
@@ -30,6 +29,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	kblabels "k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/util/validation"
+	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/dynamic"
 	"sigs.k8s.io/application/api/app/v1beta1"
 	cs "sigs.k8s.io/application/client/clientset/versioned/typed/app/v1beta1"
 )
@@ -43,16 +44,18 @@ const ApplicationsDriverName = "Application"
 // ApplicationsInterface.
 type Applications struct {
 	ai  cs.ApplicationInterface
-	di dynamic.Interface
+	di  dynamic.Interface
+	cl  discovery.CachedDiscoveryInterface
 	Log func(string, ...interface{})
 }
 
 // NewApplications initializes a new Applications wrapping an implementation of
 // the kubernetes ApplicationsInterface.
-func NewApplications(ai cs.ApplicationInterface, di dynamic.Interface) *Applications {
+func NewApplications(ai cs.ApplicationInterface, di dynamic.Interface, cl discovery.CachedDiscoveryInterface) *Applications {
 	return &Applications{
 		ai:  ai,
-		di: di,
+		di:  di,
+		cl:  cl,
 		Log: func(_ string, _ ...interface{}) {},
 	}
 }
@@ -76,7 +79,7 @@ func (d *Applications) Get(key string) (*rspb.Release, error) {
 		return nil, err
 	}
 	// found the configmap, decode the base64 data string
-	r, err := decodeReleaseFromApp(obj, d.di)
+	r, err := decodeReleaseFromApp(obj, d.di, d.cl)
 	if err != nil {
 		d.Log("get: failed to decode data %q: %s", key, err)
 		return nil, err
@@ -103,7 +106,7 @@ func (d *Applications) List(filter func(*rspb.Release) bool) ([]*rspb.Release, e
 	// iterate over the configmaps object list
 	// and decode each release
 	for _, item := range list.Items {
-		rls, err := decodeReleaseFromApp(&item, d.di)
+		rls, err := decodeReleaseFromApp(&item, d.di, d.cl)
 		if err != nil {
 			d.Log("list: failed to decode release: %v: %s", item, err)
 			continue
@@ -140,7 +143,7 @@ func (d *Applications) Query(labels map[string]string) ([]*rspb.Release, error) 
 
 	var results []*rspb.Release
 	for _, item := range list.Items {
-		rls, err := decodeReleaseFromApp(&item, d.di)
+		rls, err := decodeReleaseFromApp(&item, d.di, d.cl)
 		if err != nil {
 			d.Log("query: failed to decode release: %s", err)
 			continue
