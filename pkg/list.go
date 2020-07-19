@@ -183,24 +183,3 @@ func (r *releaseListWriter) WriteJSON(out io.Writer) error {
 func (r *releaseListWriter) WriteYAML(out io.Writer) error {
 	return output.EncodeYAML(out, r.releases)
 }
-
-// Provide dynamic auto-completion for release names
-func compListReleases(toComplete string, cfg *action.Configuration) []string {
-	client := action.NewList(cfg)
-	client.All = true
-	client.Limit = 0
-	client.Filter = fmt.Sprintf("^%s", toComplete)
-
-	client.SetStateMask()
-	results, err := client.Run()
-	if err != nil {
-		return nil
-	}
-
-	var choices []string
-	for _, res := range results {
-		choices = append(choices, res.Name)
-	}
-
-	return choices
-}

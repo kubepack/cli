@@ -20,7 +20,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 	"sort"
@@ -296,8 +295,6 @@ func decodeReleaseFromApp(app *v1beta1.Application, di dynamic.Interface, cl dis
 		if err != nil {
 			return nil, err
 		}
-	} else {
-		return nil, fmt.Errorf("application %s/%s is missing %s label", app.Namespace, app.Name, apis.LabelPackage)
 	}
 	if ap.Chart.URL != "" &&
 		ap.Chart.Name != "" &&
