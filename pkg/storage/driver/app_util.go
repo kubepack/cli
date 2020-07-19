@@ -103,8 +103,8 @@ func newApplicationObject(rls *rspb.Release, lbs labels) (*v1beta1.Application, 
 			Labels:    lbs.toMap(),
 			Annotations: map[string]string{
 				apis.LabelPackage:        string(data),
-				"helm.sh/first-deployed": rls.Info.FirstDeployed.String(),
-				"helm.sh/last-deployed":  rls.Info.LastDeployed.String(),
+				"helm.sh/first-deployed": rls.Info.FirstDeployed.UTC().Format(time.RFC3339),
+				"helm.sh/last-deployed":  rls.Info.LastDeployed.UTC().Format(time.RFC3339),
 			},
 		},
 		Spec: v1beta1.ApplicationSpec{
