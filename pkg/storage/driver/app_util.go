@@ -73,7 +73,7 @@ func newApplicationObject(rls *rspb.Release, lbs labels) (*v1beta1.Application, 
 	// apply labels
 	lbs.set("name", rls.Name)
 	lbs.set("owner", owner)
-	lbs.set("status", rls.Info.Status.String())
+	lbs.set("status", release.StatusDeployed.String())
 	lbs.set("version", strconv.Itoa(rls.Version))
 
 	p := v1alpha1.ApplicationPackage{
