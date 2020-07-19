@@ -219,6 +219,7 @@ github.com/docker/spdystream/spdy
 github.com/emicklei/go-restful
 github.com/emicklei/go-restful/log
 # github.com/evanphx/json-patch v4.5.0+incompatible
+## explicit
 github.com/evanphx/json-patch
 # github.com/exponent-io/jsonpath v0.0.0-20151013193312-d6023ce2651d
 github.com/exponent-io/jsonpath
@@ -261,6 +262,7 @@ github.com/gogo/protobuf/proto
 github.com/gogo/protobuf/protoc-gen-gogo/descriptor
 github.com/gogo/protobuf/sortkeys
 # github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
+## explicit
 github.com/golang/glog
 # github.com/golang/groupcache v0.0.0-20191027212112-611e8accdfc9
 github.com/golang/groupcache/lru
@@ -1010,7 +1012,7 @@ kmodules.xyz/resource-metadata/crds
 kmodules.xyz/resource-metadata/hub
 kmodules.xyz/resource-metadata/hub/resourceclasses
 kmodules.xyz/resource-metadata/hub/resourcedescriptors
-# kubepack.dev/kubepack v0.2.2-0.20200717005537-00a7dd88be22
+# kubepack.dev/kubepack v0.2.2-0.20200719041206-f515c664672f
 ## explicit
 kubepack.dev/kubepack/apis
 kubepack.dev/kubepack/apis/kubepack

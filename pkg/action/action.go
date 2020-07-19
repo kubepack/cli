@@ -381,7 +381,11 @@ func (c *Configuration) Init(getter genericclioptions.RESTClientGetter, namespac
 		d.Log = log
 		store = storage.Init(d)
 	case "app", "apps", "application", "applications":
-		d := driver2.NewApplications(newApplicationClient(lazyClient), newSecretClient(lazyClient))
+		d := driver2.NewApplications(newApplicationClient(lazyClient))
+		d.Log = log
+		store = storage.Init(d)
+	case "applicationsecret":
+		d := driver2.NewApplicationSecrets(newApplicationClient(lazyClient), newSecretClient(lazyClient))
 		d.Log = log
 		store = storage.Init(d)
 	case "memory":

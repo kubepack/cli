@@ -6,7 +6,9 @@ require (
 	github.com/Masterminds/semver/v3 v3.1.0
 	github.com/Masterminds/sprig/v3 v3.1.0
 	github.com/appscode/go v0.0.0-20200323182826-54e98e09185a
+	github.com/evanphx/json-patch v4.5.0+incompatible
 	github.com/gabriel-vasile/mimetype v1.1.0
+	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/gosuri/uitable v0.0.4
 	github.com/jonboulle/clockwork v0.2.0
 	github.com/pkg/errors v0.9.1
@@ -23,7 +25,7 @@ require (
 	k8s.io/kubectl v0.18.5
 	k8s.io/utils v0.0.0-20200324210504-a9aa75ae1b89
 	kmodules.xyz/client-go v0.0.0-20200714060506-0b57b4060595
-	kubepack.dev/kubepack v0.2.2-0.20200717005537-00a7dd88be22
+	kubepack.dev/kubepack v0.2.2-0.20200719041206-f515c664672f
 	sigs.k8s.io/application v0.8.2-0.20200306235134-f10d9ca8abd4
 	sigs.k8s.io/yaml v1.2.0
 )
