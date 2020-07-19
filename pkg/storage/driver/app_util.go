@@ -319,8 +319,10 @@ func decodeReleaseFromApp(app *v1beta1.Application, di dynamic.Interface, cl dis
 		return nil, err
 	}
 
-	versions := strings.Split(app.Annotations["helm.sh/component-versions"], ",")
+	var buf bytes.Buffer
+	values := map[string]interface{}{}
 
+	versions := strings.Split(app.Annotations["helm.sh/component-versions"], ",")
 	mapper := restmapper.NewDeferredDiscoveryRESTMapper(cl)
 	for i, gk := range app.Spec.ComponentGroupKinds {
 		mapping, err := mapper.RESTMapping(schema.GroupKind{
@@ -346,8 +348,6 @@ func decodeReleaseFromApp(app *v1beta1.Application, di dynamic.Interface, cl dis
 			return nil, err
 		}
 
-		var buf bytes.Buffer
-		values := map[string]interface{}{}
 		err = list.EachListItem(func(obj runtime.Object) error {
 			buf.WriteString("\n---\n")
 			data, err := yaml.Marshal(obj)
@@ -357,19 +357,30 @@ func decodeReleaseFromApp(app *v1beta1.Application, di dynamic.Interface, cl dis
 			buf.Write(data)
 
 			u := obj.(*unstructured.Unstructured)
-			return unstructured.SetNestedField(values, u.Object["spec"], u.GetAPIVersion(), u.GetKind())
+
+			err = unstructured.SetNestedField(values, u.Object["metadata"], u.GetAPIVersion(), u.GetKind(), "metadata")
+			if err != nil {
+				return err
+			}
+			if spec, ok := u.Object["spec"]; ok {
+				err = unstructured.SetNestedField(values, spec, u.GetAPIVersion(), u.GetKind(), "spec")
+				if err != nil {
+					return err
+				}
+			}
+			return nil
 		})
 		if err != nil {
 			return nil, err
 		}
-		rls.Manifest = buf.String()
-
-		if rls.Chart == nil {
-			rls.Chart = &chart.Chart{}
-		}
-		rls.Chart.Values = values
-		rls.Config = map[string]interface{}{}
 	}
+	rls.Manifest = buf.String()
+
+	if rls.Chart == nil {
+		rls.Chart = &chart.Chart{}
+	}
+	rls.Chart.Values = values
+	rls.Config = map[string]interface{}{}
 
 	return &rls, nil
 }
