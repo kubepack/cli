@@ -83,11 +83,13 @@ func newApplicationObject(rls *rspb.Release, lbs labels) (*v1beta1.Application, 
 		},
 		// Bundle: x.Chart.Bundle,
 		Chart: v1alpha1.ChartRepoRef{
-			Name: rls.Chart.Metadata.Name,
-			// URL:     rls.Chart.Metadata.Sources[0],
+			Name:    rls.Chart.Metadata.Name,
 			Version: rls.Chart.Metadata.Version,
 		},
 		Channel: v1alpha1.RegularChannel,
+	}
+	if len(rls.Chart.Metadata.Sources) > 0 {
+		p.Chart.URL = rls.Chart.Metadata.Sources[0]
 	}
 	data, err := json.Marshal(p)
 	if err != nil {

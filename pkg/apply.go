@@ -151,7 +151,6 @@ func newApplyCmd(cfg *action.Configuration, f cmdutil.Factory, out io.Writer) *c
 	//cmd.Flags().MarkDeprecated("server-dry-run", "--server-dry-run is deprecated and can be replaced with --dry-run=server.")
 	//cmd.Flags().MarkHidden("server-dry-run")
 
-
 	cmdutil.AddDryRunFlag(cmd)
 	cmdutil.AddServerSideApplyFlags(cmd)
 
