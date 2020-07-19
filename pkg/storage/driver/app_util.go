@@ -304,6 +304,13 @@ func decodeReleaseFromApp(app *v1beta1.Application, di dynamic.Interface, cl dis
 			return nil, err
 		}
 		rls.Chart = chrt.Chart
+	} else {
+		rls.Chart = &chart.Chart{
+			Metadata:  &chart.Metadata{
+				Name:         ap.Chart.Name,
+				Version:      ap.Chart.Version,
+			},
+		}
 	}
 
 	rls.Info = &release.Info{
