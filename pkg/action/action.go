@@ -387,7 +387,11 @@ func (c *Configuration) Init(getter genericclioptions.RESTClientGetter, namespac
 		if err != nil {
 			return err
 		}
-		d := driver2.NewApplications(newApplicationClient(lazyClient), dynamic.NewForConfigOrDie(config), memory.NewMemCacheClient(kubernetes.NewForConfigOrDie(config).Discovery()))
+		d := driver2.NewApplications(
+			newApplicationClient(lazyClient),
+			dynamic.NewForConfigOrDie(config),
+			memory.NewMemCacheClient(kubernetes.NewForConfigOrDie(config).Discovery()),
+		)
 		d.Log = log
 		store = storage.Init(d)
 	case "appsec", "applicationsecret":
