@@ -108,7 +108,7 @@ func newApplyCmd(cfg *action.Configuration, out io.Writer) *cobra.Command {
 	var outfmt output.Format
 
 	cmd := &cobra.Command{
-		Use:   "apply [NAME] [CHART]",
+		Use:   "apply-chart [NAME] [CHART]",
 		Short: "apply a chart",
 		Long:  applyDesc,
 		Args:  require.MinimumNArgs(1),
