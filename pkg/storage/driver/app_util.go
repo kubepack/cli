@@ -17,29 +17,36 @@ limitations under the License.
 package driver
 
 import (
+	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
+	"helm.sh/helm/v3/pkg/chart"
+	"helm.sh/helm/v3/pkg/release"
+	helmtime "helm.sh/helm/v3/pkg/time"
 	"io"
-	"log"
+	"k8s.io/apimachinery/pkg/api/meta"
+	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/restmapper"
+	"kubepack.dev/kubepack/apis"
+	"kubepack.dev/kubepack/apis/kubepack/v1alpha1"
+	"kubepack.dev/kubepack/pkg/lib"
 	"net/http"
 	"sort"
 	"strconv"
 	"strings"
-
-	"kubepack.dev/kubepack/apis"
-	"kubepack.dev/kubepack/apis/kubepack/v1alpha1"
-	"kubepack.dev/kubepack/pkg/lib"
+	"time"
 
 	"github.com/gabriel-vasile/mimetype"
-	"helm.sh/helm/v3/pkg/chart"
 	rspb "helm.sh/helm/v3/pkg/release"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/apimachinery/pkg/util/yaml"
+	yu "k8s.io/apimachinery/pkg/util/yaml"
 	"sigs.k8s.io/application/api/app/v1beta1"
+	"sigs.k8s.io/yaml"
 )
 
 // newApplicationSecretsObject constructs a kubernetes Application object
@@ -93,7 +100,9 @@ func newApplicationObject(rls *rspb.Release, lbs labels) (*v1beta1.Application, 
 			Namespace: rls.Namespace,
 			Labels:    lbs.toMap(),
 			Annotations: map[string]string{
-				apis.LabelPackage: string(data),
+				apis.LabelPackage:        string(data),
+				"helm.sh/first-deployed": rls.Info.FirstDeployed.String(),
+				"helm.sh/last-deployed":  rls.Info.LastDeployed.String(),
 			},
 		},
 		Spec: v1beta1.ApplicationSpec{
@@ -143,7 +152,7 @@ func newApplicationObject(rls *rspb.Release, lbs labels) (*v1beta1.Application, 
 		})
 	}
 
-	components := map[metav1.GroupKind]struct{}{}
+	components := map[metav1.GroupKind]string{}
 	var commonLabels map[string]string
 
 	// Hooks ?
@@ -152,17 +161,32 @@ func newApplicationObject(rls *rspb.Release, lbs labels) (*v1beta1.Application, 
 		return nil, err
 	}
 
-	gks := make([]metav1.GroupKind, 0, len(components))
-	for gk := range components {
-		gks = append(gks, gk)
+	gvks := make([]metav1.GroupVersionKind, 0, len(components))
+	for gk, v := range components {
+		gvks = append(gvks, metav1.GroupVersionKind{
+			Group:   gk.Group,
+			Version: v,
+			Kind:    gk.Kind,
+		})
 	}
-	sort.Slice(gks, func(i, j int) bool {
-		if gks[i].Group == gks[j].Group {
-			return gks[i].Kind < gks[j].Kind
+	sort.Slice(gvks, func(i, j int) bool {
+		if gvks[i].Group == gvks[j].Group {
+			return gvks[i].Kind < gvks[j].Kind
 		}
-		return gks[i].Group < gks[j].Group
+		return gvks[i].Group < gvks[j].Group
 	})
+
+	gks := make([]metav1.GroupKind, 0, len(components))
+	versions := make([]string, 0, len(components))
+	for _, gvk := range gvks {
+		gks = append(gks, metav1.GroupKind{
+			Group: gvk.Group,
+			Kind:  gvk.Kind,
+		})
+		versions = append(versions, gvk.Version)
+	}
 	obj.Spec.ComponentGroupKinds = gks
+	obj.Annotations["helm.sh/component-versions"] = strings.Join(versions, ",")
 
 	if len(commonLabels) > 0 {
 		obj.Spec.Selector = &metav1.LabelSelector{
@@ -192,17 +216,15 @@ func mergeSecret(app *v1beta1.Application, s *corev1.Secret) {
 						Namespace: s.Namespace,
 						Name:      s.Name,
 					},
-					Key: "values",
+					Key: "release",
 				},
 			},
 		})
 	}
 }
 
-var empty = struct{}{}
-
-func extractComponents(data string, components map[metav1.GroupKind]struct{}, commonLabels map[string]string) (map[metav1.GroupKind]struct{}, map[string]string, error) {
-	reader := yaml.NewYAMLOrJSONDecoder(strings.NewReader(data), 2048)
+func extractComponents(data string, components map[metav1.GroupKind]string, commonLabels map[string]string) (map[metav1.GroupKind]string, map[string]string, error) {
+	reader := yu.NewYAMLOrJSONDecoder(strings.NewReader(data), 2048)
 	for {
 		var obj unstructured.Unstructured
 		err := reader.Decode(&obj)
@@ -219,7 +241,7 @@ func extractComponents(data string, components map[metav1.GroupKind]struct{}, co
 				if err != nil {
 					return err
 				}
-				components[metav1.GroupKind{Group: gv.Group, Kind: castItem.GetKind()}] = empty
+				components[metav1.GroupKind{Group: gv.Group, Kind: castItem.GetKind()}] = gv.Version
 
 				if commonLabels == nil {
 					commonLabels = castItem.GetLabels()
@@ -240,7 +262,7 @@ func extractComponents(data string, components map[metav1.GroupKind]struct{}, co
 			if err != nil {
 				return components, commonLabels, err
 			}
-			components[metav1.GroupKind{Group: gv.Group, Kind: obj.GetKind()}] = empty
+			components[metav1.GroupKind{Group: gv.Group, Kind: obj.GetKind()}] = gv.Version
 
 			if commonLabels == nil {
 				commonLabels = obj.GetLabels()
@@ -256,84 +278,10 @@ func extractComponents(data string, components map[metav1.GroupKind]struct{}, co
 	return components, commonLabels, nil
 }
 
-func copyMap(src map[string]interface{}) map[string]interface{} {
-	m := make(map[string]interface{}, len(src))
-	for k, v := range src {
-		m[k] = v
-	}
-	return m
-}
-
-// coalesceValues builds up a values map for a particular chart.
-//
-// Values in v will override the values in the chart.
-func coalesceValues(c *chart.Chart, v map[string]interface{}) {
-	for key, val := range c.Values {
-		if value, ok := v[key]; ok {
-			if value == nil {
-				// When the YAML value is null, we remove the value's key.
-				// This allows Helm's various sources of values (value files or --set) to
-				// remove incompatible keys from any previous chart, file, or set values.
-				delete(v, key)
-			} else if dest, ok := value.(map[string]interface{}); ok {
-				// if v[key] is a table, merge nv's val table into v[key].
-				src, ok := val.(map[string]interface{})
-				if !ok {
-					log.Printf("warning: skipped value for %s: Not a table.", key)
-					continue
-				}
-				// Because v has higher precedence than nv, dest values override src
-				// values.
-				CoalesceTables(dest, src)
-			}
-		} else {
-			// If the key is not in v, copy it from nv.
-			v[key] = val
-		}
-	}
-}
-
-// CoalesceTables merges a source map into a destination map.
-//
-// dest is considered authoritative.
-func CoalesceTables(dst, src map[string]interface{}) map[string]interface{} {
-	// When --reuse-values is set but there are no modifications yet, return new values
-	if src == nil {
-		return dst
-	}
-	if dst == nil {
-		return src
-	}
-	// Because dest has higher precedence than src, dest values override src
-	// values.
-	for key, val := range src {
-		if dv, ok := dst[key]; ok && dv == nil {
-			delete(dst, key)
-		} else if !ok {
-			dst[key] = val
-		} else if istable(val) {
-			if istable(dv) {
-				CoalesceTables(dv.(map[string]interface{}), val.(map[string]interface{}))
-			} else {
-				log.Printf("warning: cannot overwrite table with non table for %s (%v)", key, val)
-			}
-		} else if istable(dv) {
-			log.Printf("warning: destination for %s is a table. Ignoring non-table value %v", key, val)
-		}
-	}
-	return dst
-}
-
-// istable is a special-purpose function to see if the present thing matches the definition of a YAML table.
-func istable(v interface{}) bool {
-	_, ok := v.(map[string]interface{})
-	return ok
-}
-
 // decodeRelease decodes the bytes of data into a release
 // type. Data must contain a base64 encoded gzipped string of a
 // valid release, otherwise an error is returned.
-func decodeReleaseFromApp(app *v1beta1.Application) (*rspb.Release, error) {
+func decodeReleaseFromApp(app *v1beta1.Application, di dynamic.Interface) (*rspb.Release, error) {
 	var rls rspb.Release
 
 	rls.Name = app.Labels["name"]
@@ -349,12 +297,80 @@ func decodeReleaseFromApp(app *v1beta1.Application) (*rspb.Release, error) {
 	} else {
 		return nil, fmt.Errorf("application %s/%s is missing %s label", app.Namespace, app.Name, apis.LabelPackage)
 	}
+	if ap.Chart.URL != "" &&
+		ap.Chart.Name != "" &&
+		ap.Chart.Version != "" {
+		chrt, err := lib.DefaultRegistry.GetChart(ap.Chart.URL, ap.Chart.Name, ap.Chart.Version)
+		if err != nil {
+			return nil, err
+		}
+		rls.Chart = chrt.Chart
+	}
 
-	chrt, err := lib.DefaultRegistry.GetChart(ap.Chart.URL, ap.Chart.Name, ap.Chart.Version)
+	rls.Info = &release.Info{
+		Description: app.Spec.Descriptor.Description,
+		Status:      release.Status(app.Labels["status"]),
+		Notes:       app.Spec.Descriptor.Notes,
+	}
+	rls.Info.FirstDeployed, _ = helmtime.Parse(time.RFC3339, app.Annotations["helm.sh/first-deployed"])
+	rls.Info.LastDeployed, _ = helmtime.Parse(time.RFC3339, app.Annotations["helm.sh/last-deployed"])
+
+	sel, err := metav1.LabelSelectorAsSelector(app.Spec.Selector)
 	if err != nil {
 		return nil, err
 	}
-	rls.Chart = chrt.Chart
+
+	versions := strings.Split(app.Annotations["helm.sh/component-versions"], ",")
+
+	mapper := restmapper.NewDeferredDiscoveryRESTMapper(nil)
+	for i, gk := range app.Spec.ComponentGroupKinds {
+		mapping, err := mapper.RESTMapping(schema.GroupKind{
+			Group: gk.Group,
+			Kind:  gk.Kind,
+		}, versions[i])
+		if err != nil {
+			return nil, err
+		}
+		mapping.Resource.Version = versions[i]
+
+		var ri dynamic.ResourceInterface
+		if mapping.Scope.Name() == meta.RESTScopeNameNamespace {
+			ri = di.Resource(mapping.Resource).Namespace(app.Namespace)
+		} else {
+			ri = di.Resource(mapping.Resource)
+		}
+
+		list, err := ri.List(context.TODO(), metav1.ListOptions{
+			LabelSelector: sel.String(),
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		var buf bytes.Buffer
+		values := map[string]interface{}{}
+		err = list.EachListItem(func(obj runtime.Object) error {
+			buf.WriteString("\n---\n")
+			data, err := yaml.Marshal(obj)
+			if err != nil {
+				return err
+			}
+			buf.Write(data)
+
+			u := obj.(*unstructured.Unstructured)
+			return unstructured.SetNestedField(values, u.Object["spec"], u.GetAPIVersion(), u.GetKind())
+		})
+		if err != nil {
+			return nil, err
+		}
+		rls.Manifest = buf.String()
+
+		if rls.Chart == nil {
+			rls.Chart = &chart.Chart{}
+		}
+		rls.Chart.Values= values
+		rls.Config = map[string]interface{}{}
+	}
 
 	return &rls, nil
 }

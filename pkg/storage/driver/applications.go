@@ -18,6 +18,7 @@ package driver
 
 import (
 	"context"
+	"k8s.io/client-go/dynamic"
 	"strconv"
 	"strings"
 	"time"
@@ -42,14 +43,16 @@ const ApplicationsDriverName = "Application"
 // ApplicationsInterface.
 type Applications struct {
 	ai  cs.ApplicationInterface
+	di dynamic.Interface
 	Log func(string, ...interface{})
 }
 
 // NewApplications initializes a new Applications wrapping an implementation of
 // the kubernetes ApplicationsInterface.
-func NewApplications(ai cs.ApplicationInterface) *Applications {
+func NewApplications(ai cs.ApplicationInterface, di dynamic.Interface) *Applications {
 	return &Applications{
 		ai:  ai,
+		di: di,
 		Log: func(_ string, _ ...interface{}) {},
 	}
 }
@@ -73,7 +76,7 @@ func (d *Applications) Get(key string) (*rspb.Release, error) {
 		return nil, err
 	}
 	// found the configmap, decode the base64 data string
-	r, err := decodeReleaseFromApp(obj)
+	r, err := decodeReleaseFromApp(obj, d.di)
 	if err != nil {
 		d.Log("get: failed to decode data %q: %s", key, err)
 		return nil, err
@@ -100,7 +103,7 @@ func (d *Applications) List(filter func(*rspb.Release) bool) ([]*rspb.Release, e
 	// iterate over the configmaps object list
 	// and decode each release
 	for _, item := range list.Items {
-		rls, err := decodeReleaseFromApp(&item)
+		rls, err := decodeReleaseFromApp(&item, d.di)
 		if err != nil {
 			d.Log("list: failed to decode release: %v: %s", item, err)
 			continue
@@ -137,7 +140,7 @@ func (d *Applications) Query(labels map[string]string) ([]*rspb.Release, error) 
 
 	var results []*rspb.Release
 	for _, item := range list.Items {
-		rls, err := decodeReleaseFromApp(&item)
+		rls, err := decodeReleaseFromApp(&item, d.di)
 		if err != nil {
 			d.Log("query: failed to decode release: %s", err)
 			continue
