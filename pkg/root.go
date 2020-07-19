@@ -57,7 +57,7 @@ func debug(format string, v ...interface{}) {
 
 func NewRootCmd() *cobra.Command {
 	var rootCmd = &cobra.Command{
-		Use:               "k-apply",
+		Use:               "kubectl-pack",
 		Short:             `Test kubectl apply`,
 		Long:              `Test kubectl apply`,
 		DisableAutoGenTag: true,
@@ -79,7 +79,7 @@ func NewRootCmd() *cobra.Command {
 	f := cmdutil.NewFactory(matchVersionKubeConfigFlags)
 
 	ioStreams, _, _, _ := genericclioptions.NewTestIOStreams()
-	rootCmd.AddCommand(apply.NewCmdApply("k-apply", f, ioStreams))
+	rootCmd.AddCommand(apply.NewCmdApply("kubectl-pack", f, ioStreams))
 	rootCmd.AddCommand(delete.NewCmdDelete(f, ioStreams))
 
 	actionConfig := new(action.Configuration)
