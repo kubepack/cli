@@ -38,6 +38,7 @@ import (
 	"helm.sh/helm/v3/pkg/storage/driver"
 	v1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/cli-runtime/pkg/resource"
@@ -336,7 +337,7 @@ func (i *Apply) Run(chrt *chart.Chart, vals map[string]interface{}) (*release.Re
 		//}
 
 	} else if len(resources) > 0 {
-		if _, err := i.cfg.KubeClient.Update(toBeAdopted, resources, false); err != nil {
+		if _, err := i.Update(toBeAdopted, resources, false); err != nil {
 			return i.failRelease(rel, err)
 		}
 	}
@@ -521,4 +522,65 @@ func (i *Apply) NameAndChart(args []string) (string, string, error) {
 	}
 
 	return fmt.Sprintf("%s-%d", base, time.Now().Unix()), args[0], nil
+}
+
+// ------------------------------------------------------
+var metadataAccessor = meta.NewAccessor()
+
+func (i *Apply) Update(original, target kube.ResourceList, force bool) (*kube.Result, error) {
+	res := &kube.Result{}
+
+	i.cfg.Log("checking %d resources for changes", len(target))
+
+	errs := []error{}
+	for _, info := range target {
+		if err := i.ApplyOptions.ApplyOneObject(info); err != nil {
+			errs = append(errs, err)
+		}
+	}
+	// If any errors occurred during apply, then return error (or
+	// aggregate of errors).
+	if len(errs) == 1 {
+		return nil, errs[0]
+	}
+	if len(errs) > 1 {
+		return nil, utilerrors.NewAggregate(errs)
+	}
+	//if _, err := i.cfg.KubeClient.Create(resources); err != nil {
+	//	return i.failRelease(rel, err)
+	//}
+
+	for _, info := range original.Difference(target) {
+		i.cfg.Log("Deleting %q in %s...", info.Name, info.Namespace)
+
+		if err := info.Get(); err != nil {
+			i.cfg.Log("Unable to get obj %q, err: %s", info.Name, err)
+		}
+		annotations, err := metadataAccessor.Annotations(info.Object)
+		if err != nil {
+			i.cfg.Log("Unable to get annotations on %q, err: %s", info.Name, err)
+		}
+		if annotations != nil && annotations[kube.ResourcePolicyAnno] == kube.KeepPolicy {
+			i.cfg.Log("Skipping delete of %q due to annotation [%s=%s]", info.Name, kube.ResourcePolicyAnno, kube.KeepPolicy)
+			continue
+		}
+
+		res.Deleted = append(res.Deleted, info)
+		if err := deleteResource(info); err != nil {
+			if apierrors.IsNotFound(err) {
+				i.cfg.Log("Attempted to delete %q, but the resource was missing", info.Name)
+			} else {
+				i.cfg.Log("Failed to delete %q, err: %s", info.Name, err)
+				return res, errors.Wrapf(err, "Failed to delete %q", info.Name)
+			}
+		}
+	}
+	return res, nil
+}
+
+func deleteResource(info *resource.Info) error {
+	policy := metav1.DeletePropagationBackground
+	opts := &metav1.DeleteOptions{PropagationPolicy: &policy}
+	_, err := resource.NewHelper(info.Client, info.Mapping).DeleteWithOptions(info.Namespace, info.Name, opts)
+	return err
 }
