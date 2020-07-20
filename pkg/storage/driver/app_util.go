@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"sort"
@@ -112,7 +113,7 @@ func newApplicationObject(rls *rspb.Release, lbs labels) (*v1beta1.Application, 
 			Descriptor: v1beta1.Descriptor{
 				Type:        rls.Chart.Metadata.Type,
 				Version:     rls.Chart.Metadata.AppVersion,
-				Description: rls.Chart.Metadata.Description,
+				Description: rls.Info.Description,
 				Owners:      nil, // FIX
 				Keywords:    rls.Chart.Metadata.Keywords,
 				Links: []v1beta1.Link{
@@ -128,7 +129,7 @@ func newApplicationObject(rls *rspb.Release, lbs labels) (*v1beta1.Application, 
 				MatchLabels: map[string]string{},
 			},
 			AddOwnerRef:   true, // TODO
-			AssemblyPhase: v1beta1.Pending,
+			AssemblyPhase: toAssemblyPhase(rls.Info.Status),
 		},
 	}
 	if rls.Chart.Metadata.Icon != "" {
@@ -198,6 +199,18 @@ func newApplicationObject(rls *rspb.Release, lbs labels) (*v1beta1.Application, 
 	}
 
 	return obj, nil
+}
+
+func toAssemblyPhase(status release.Status) v1beta1.ApplicationAssemblyPhase {
+	switch status {
+	case release.StatusUnknown, release.StatusUninstalling, release.StatusPendingInstall, release.StatusPendingUpgrade, release.StatusPendingRollback:
+		return v1beta1.Pending
+	case release.StatusDeployed, release.StatusUninstalled, release.StatusSuperseded:
+		return v1beta1.Succeeded
+	case release.StatusFailed:
+		return v1beta1.Failed
+	}
+	panic(fmt.Sprintf("unknown status: %s", status.String()))
 }
 
 func mergeSecret(app *v1beta1.Application, s *corev1.Secret) {
