@@ -159,9 +159,15 @@ func (i *Apply) Run(chrt *chart.Chart, vals map[string]interface{}) (*release.Re
 		}
 	}
 
-	if err := i.availableName(); err != nil {
-		return nil, err
+	// TAMAL: Avoid this check for upgrade flow
+	//if err := i.availableName(); err != nil {
+	//	return nil, err
+	//}
+
+	if err := validateReleaseName(i.ReleaseName); err != nil {
+		return nil, errors.Errorf("release name is invalid: %s", i.ReleaseName)
 	}
+	i.cfg.Log("preparing upgrade for %s", i.ReleaseName)
 
 	// Pre-apply anything in the crd/ directory. We do this before Helm
 	// contacts the upstream server and builds the capabilities object.
