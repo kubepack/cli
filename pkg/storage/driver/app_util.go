@@ -350,7 +350,7 @@ func decodeReleaseFromApp(app *v1beta1.Application, di dynamic.Interface, cl dis
 			ri = di.Resource(mapping.Resource)
 		}
 
-		list, err := ri.List(context.TODO(), metav1.ListOptions{
+		list, err := ri.List(context.Background(), metav1.ListOptions{
 			LabelSelector: sel.String(),
 		})
 		if err != nil {

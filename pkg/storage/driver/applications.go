@@ -68,8 +68,13 @@ func (d *Applications) Name() string {
 // Get fetches the release named by key. The corresponding release is returned
 // or error if not found.
 func (d *Applications) Get(key string) (*rspb.Release, error) {
+	name, _, err := ParseKey(key)
+	if err != nil {
+		return nil, err
+	}
+
 	// fetch the configmap holding the release named by key
-	obj, err := d.ai.Get(context.Background(), key, metav1.GetOptions{})
+	obj, err := d.ai.Get(context.Background(), name, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			return nil, driver.ErrReleaseNotFound
@@ -155,7 +160,7 @@ func (d *Applications) Query(labels map[string]string) ([]*rspb.Release, error) 
 
 // Create creates a new Application holding the release. If the
 // Application already exists, ErrReleaseExists is returned.
-func (d *Applications) Create(key string, rls *rspb.Release) error {
+func (d *Applications) Create(_ string, rls *rspb.Release) error {
 	// set labels for configmaps object meta data
 	var lbs labels
 
@@ -169,7 +174,7 @@ func (d *Applications) Create(key string, rls *rspb.Release) error {
 		return err
 	}
 	// push the configmap object out into the kubiverse
-	_, _, err = createOrPatchApplication(context.TODO(), d.ai, obj.ObjectMeta, func(in *v1beta1.Application) *v1beta1.Application {
+	_, _, err = createOrPatchApplication(context.Background(), d.ai, obj.ObjectMeta, func(in *v1beta1.Application) *v1beta1.Application {
 		in.Labels = obj.Labels
 		in.Annotations = obj.Annotations
 		in.Spec = obj.Spec
@@ -188,7 +193,7 @@ func (d *Applications) Create(key string, rls *rspb.Release) error {
 
 // Update updates the Application holding the release. If not found
 // the Application is created to hold the release.
-func (d *Applications) Update(key string, rls *rspb.Release) error {
+func (d *Applications) Update(_ string, rls *rspb.Release) error {
 	// set labels for configmaps object meta data
 	var lbs labels
 
@@ -202,7 +207,7 @@ func (d *Applications) Update(key string, rls *rspb.Release) error {
 		return err
 	}
 	// push the configmap object out into the kubiverse
-	_, _, err = createOrPatchApplication(context.TODO(), d.ai, obj.ObjectMeta, func(in *v1beta1.Application) *v1beta1.Application {
+	_, _, err = createOrPatchApplication(context.Background(), d.ai, obj.ObjectMeta, func(in *v1beta1.Application) *v1beta1.Application {
 		in.Labels = obj.Labels
 		in.Annotations = obj.Annotations
 		in.Spec = obj.Spec
@@ -217,12 +222,17 @@ func (d *Applications) Update(key string, rls *rspb.Release) error {
 
 // Delete deletes the Application holding the release named by key.
 func (d *Applications) Delete(key string) (rls *rspb.Release, err error) {
+	name, _, err := ParseKey(key)
+	if err != nil {
+		return nil, err
+	}
+
 	// fetch the release to check existence
-	if rls, err = d.Get(key); err != nil {
+	if rls, err = d.Get(name); err != nil {
 		return nil, err
 	}
 	// delete the release
-	if err = d.ai.Delete(context.Background(), rls.Name, metav1.DeleteOptions{}); err != nil {
+	if err = d.ai.Delete(context.Background(), name, metav1.DeleteOptions{}); err != nil {
 		return rls, err
 	}
 	return rls, nil

@@ -145,7 +145,7 @@ func (d *ApplicationSecrets) Create(key string, rls *rspb.Release) error {
 		return errors.Wrapf(err, "create: failed to encode release %q", rls.Name)
 	}
 	// push the secret object out into the kubiverse
-	_, _, err = createOrPatchApplication(context.TODO(), d.ai, app.ObjectMeta, func(in *v1beta1.Application) *v1beta1.Application {
+	_, _, err = createOrPatchApplication(context.Background(), d.ai, app.ObjectMeta, func(in *v1beta1.Application) *v1beta1.Application {
 		in.Labels = app.Labels
 		in.Annotations = app.Annotations
 		in.Spec = app.Spec
@@ -189,7 +189,7 @@ func (d *ApplicationSecrets) Update(key string, rls *rspb.Release) error {
 		return errors.Wrapf(err, "update: failed to encode release %q", rls.Name)
 	}
 	// push the secret object out into the kubiverse
-	_, _, err = createOrPatchApplication(context.TODO(), d.ai, app.ObjectMeta, func(in *v1beta1.Application) *v1beta1.Application {
+	_, _, err = createOrPatchApplication(context.Background(), d.ai, app.ObjectMeta, func(in *v1beta1.Application) *v1beta1.Application {
 		in.Labels = app.Labels
 		in.Annotations = app.Annotations
 		in.Spec = app.Spec
