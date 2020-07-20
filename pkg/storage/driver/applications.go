@@ -202,7 +202,12 @@ func (d *Applications) Update(key string, rls *rspb.Release) error {
 		return err
 	}
 	// push the configmap object out into the kubiverse
-	_, err = d.ai.Update(context.Background(), obj, metav1.UpdateOptions{})
+	_, _, err = createOrPatchApplication(context.TODO(), d.ai, obj.ObjectMeta, func(in *v1beta1.Application) *v1beta1.Application {
+		in.Labels = obj.Labels
+		in.Annotations = obj.Annotations
+		in.Spec = obj.Spec
+		return in
+	}, metav1.PatchOptions{})
 	if err != nil {
 		d.Log("update: failed to update: %s", err)
 		return err
@@ -217,7 +222,7 @@ func (d *Applications) Delete(key string) (rls *rspb.Release, err error) {
 		return nil, err
 	}
 	// delete the release
-	if err = d.ai.Delete(context.Background(), key, metav1.DeleteOptions{}); err != nil {
+	if err = d.ai.Delete(context.Background(), rls.Name, metav1.DeleteOptions{}); err != nil {
 		return rls, err
 	}
 	return rls, nil

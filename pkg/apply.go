@@ -127,6 +127,7 @@ func newApplyCmd(cfg *action.Configuration, f cmdutil.Factory, out io.Writer) *c
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cmdutil.CheckErr(o.Complete(f, cmd))
 			client.ApplyOptions = o
+			client.DryRun = o.DryRunStrategy != cmdutil.DryRunNone
 
 			rel, err := runApply(args, client, valueOpts, out)
 			if err != nil {
