@@ -25,11 +25,14 @@ import (
 type ApplyOptions struct {
 	*apply.ApplyOptions
 
-	ChartURL    string                `json:"chartURL"`
-	ChartName   string                `json:"chartName"`
-	Version     string                `json:"version"`
+	ChartURL  string `json:"chartURL"`
+	ChartName string `json:"chartName"`
+	Version   string `json:"version"`
+
 	ValuesFile  string                `json:"valuesFile"`
 	ValuesPatch *runtime.RawExtension `json:"valuesPatch"`
+	// OR
+	Values map[string]interface{} `json:"values"`
 
 	CreateNamespace bool
 	DryRun          bool
@@ -199,6 +202,8 @@ func (x *Applier) Run() (*release.Release, error) {
 		if err != nil {
 			return nil, err
 		}
+	} else if x.opts.Values != nil {
+		vals = x.opts.Values
 	}
 
 	return cmd.Run(chrt.Chart, vals)
