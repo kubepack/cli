@@ -116,7 +116,7 @@ func newApplyCmd(cfg *action.Configuration, f cmdutil.Factory, out io.Writer) *c
 		Out:    os.Stdout,
 		ErrOut: os.Stderr,
 	})
-	//cmdutil.CheckErr(o.Complete(f, cmd))
+	//cmdutil.CheckErr(o.CompleteFlags(f, cmd))
 	//cmdutil.CheckErr(o.Run())
 
 	cmd := &cobra.Command{
@@ -125,7 +125,7 @@ func newApplyCmd(cfg *action.Configuration, f cmdutil.Factory, out io.Writer) *c
 		Long:  applyDesc,
 		Args:  require.MinimumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cmdutil.CheckErr(o.Complete(f, cmd))
+			cmdutil.CheckErr(o.CompleteFlags(f, cmd))
 			client.ApplyOptions = o
 			client.DryRun = o.DryRunStrategy != cmdutil.DryRunNone
 

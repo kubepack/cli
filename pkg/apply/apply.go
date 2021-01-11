@@ -146,7 +146,7 @@ func NewCmdApply(baseName string, f cmdutil.Factory, ioStreams genericclioptions
 		Long:                  applyLong,
 		Example:               applyExample,
 		Run: func(cmd *cobra.Command, args []string) {
-			cmdutil.CheckErr(o.Complete(f, cmd))
+			cmdutil.CheckErr(o.CompleteFlags(f, cmd))
 			cmdutil.CheckErr(validateArgs(cmd, args))
 			cmdutil.CheckErr(o.Run())
 		},
@@ -171,8 +171,8 @@ func NewCmdApply(baseName string, f cmdutil.Factory, ioStreams genericclioptions
 	return cmd
 }
 
-// Complete verifies if ApplyOptions are valid and without conflicts.
-func (o *ApplyOptions) Complete(f cmdutil.Factory, cmd *cobra.Command) error {
+// CompleteFlags verifies if ApplyOptions are valid and without conflicts.
+func (o *ApplyOptions) CompleteFlags(f cmdutil.Factory, cmd *cobra.Command) error {
 	var err error
 	o.ServerSideApply = cmdutil.GetServerSideApplyFlag(cmd)
 	o.ForceConflicts = cmdutil.GetForceConflictsFlag(cmd)
@@ -180,6 +180,18 @@ func (o *ApplyOptions) Complete(f cmdutil.Factory, cmd *cobra.Command) error {
 	if err != nil {
 		return err
 	}
+	o.FieldManager = cmdutil.GetFieldManagerFlag(cmd)
+
+	o.Validator, err = f.Validator(cmdutil.GetFlagBool(cmd, "validate"))
+	if err != nil {
+		return err
+	}
+	return o.Complete(f)
+}
+
+// Complete verifies if ApplyOptions are valid and without conflicts.
+func (o *ApplyOptions) Complete(f cmdutil.Factory) error {
+	var err error
 	o.DynamicClient, err = f.DynamicClient()
 	if err != nil {
 		return err
@@ -189,7 +201,6 @@ func (o *ApplyOptions) Complete(f cmdutil.Factory, cmd *cobra.Command) error {
 		return err
 	}
 	o.DryRunVerifier = resource.NewDryRunVerifier(o.DynamicClient, discoveryClient)
-	o.FieldManager = cmdutil.GetFieldManagerFlag(cmd)
 
 	if o.ForceConflicts && !o.ServerSideApply {
 		return fmt.Errorf("--force-conflicts only works with --server-side")
@@ -222,10 +233,6 @@ func (o *ApplyOptions) Complete(f cmdutil.Factory, cmd *cobra.Command) error {
 	//}
 
 	o.OpenAPISchema, _ = f.OpenAPISchema()
-	o.Validator, err = f.Validator(cmdutil.GetFlagBool(cmd, "validate"))
-	if err != nil {
-		return err
-	}
 	o.Builder = f.NewBuilder()
 	o.Mapper, err = f.ToRESTMapper()
 	if err != nil {
