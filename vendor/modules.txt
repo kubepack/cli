@@ -1072,6 +1072,7 @@ kubepack.dev/kubepack/apis/kubepack/v1alpha1
 kubepack.dev/kubepack/crds
 kubepack.dev/kubepack/pkg/lib
 # kubepack.dev/lib-helm v0.2.1
+## explicit
 kubepack.dev/lib-helm/action
 kubepack.dev/lib-helm/chart
 kubepack.dev/lib-helm/chart/loader
