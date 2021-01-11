@@ -571,6 +571,10 @@ gomodules.xyz/blobfs
 gomodules.xyz/blobfs/testing
 # gomodules.xyz/jsonpatch/v2 v2.1.0
 gomodules.xyz/jsonpatch/v2
+# gomodules.xyz/jsonpatch/v3 v3.0.1
+gomodules.xyz/jsonpatch/v3
+# gomodules.xyz/orderedmap v0.1.0
+gomodules.xyz/orderedmap
 # gomodules.xyz/version v0.1.0
 gomodules.xyz/version
 # gomodules.xyz/x v0.0.0-20201105065653-91c568df6331
@@ -1039,7 +1043,7 @@ k8s.io/utils/pointer
 k8s.io/utils/trace
 # kmodules.xyz/apiversion v0.2.0
 kmodules.xyz/apiversion
-# kmodules.xyz/client-go v0.0.0-20201208053851-a1d7be95e006
+# kmodules.xyz/client-go v0.0.0-20201230092550-8ca15cfcbefa
 ## explicit
 kmodules.xyz/client-go
 kmodules.xyz/client-go/apiextensions
@@ -1060,7 +1064,7 @@ kmodules.xyz/resource-metadata/hub/resourcedescriptors
 # kubepack.dev/chart-doc-gen v0.3.1-0.20210111011933-daa7c1d70a65
 ## explicit
 kubepack.dev/chart-doc-gen/api
-# kubepack.dev/kubepack v0.2.2-0.20201228191331-2fb57a82eaa6
+# kubepack.dev/kubepack v0.2.2-0.20210111140209-b1342c8a18a4
 ## explicit
 kubepack.dev/kubepack/apis
 kubepack.dev/kubepack/apis/kubepack

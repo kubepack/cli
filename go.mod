@@ -30,10 +30,10 @@ require (
 	k8s.io/kube-openapi v0.0.0-20200410145947-61e04a5be9a6
 	k8s.io/kubectl v0.18.9
 	k8s.io/utils v0.0.0-20200414100711-2df71ebbae66
-	kmodules.xyz/client-go v0.0.0-20201208053851-a1d7be95e006
+	kmodules.xyz/client-go v0.0.0-20201230092550-8ca15cfcbefa
 	kmodules.xyz/resource-metadata v0.4.8-0.20210109211859-ee04a80b905a
 	kubepack.dev/chart-doc-gen v0.3.1-0.20210111011933-daa7c1d70a65
-	kubepack.dev/kubepack v0.2.2-0.20201228191331-2fb57a82eaa6
+	kubepack.dev/kubepack v0.2.2-0.20210111140209-b1342c8a18a4
 	sigs.k8s.io/application v0.8.2-0.20200306235134-f10d9ca8abd4
 	sigs.k8s.io/yaml v1.2.0
 )

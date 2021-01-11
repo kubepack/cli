@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -12,6 +11,7 @@ import (
 	"text/template"
 
 	"kubepack.dev/chart-doc-gen/api"
+	"kubepack.dev/kubepack/pkg/lib"
 
 	"github.com/Masterminds/sprig"
 	"github.com/gobuffalo/flect"
@@ -21,10 +21,7 @@ import (
 	crdv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/util/sets"
-	ylib "k8s.io/apimachinery/pkg/util/yaml"
 	"kmodules.xyz/resource-metadata/hub"
 	"sigs.k8s.io/yaml"
 )
@@ -67,13 +64,13 @@ func NewCmdFuse() *cobra.Command {
 				return err
 			}
 
-			err = ProcessResource(filepath.Join(sampleDir, chartName), func(obj *unstructured.Unstructured) error {
-				rsKey, err := resourceKey(obj.GetAPIVersion(), obj.GetKind(), chartName, obj.GetName())
+			err = lib.ProcessDir(filepath.Join(sampleDir, chartName), func(obj *unstructured.Unstructured) error {
+				rsKey, err := lib.ResourceKey(obj.GetAPIVersion(), obj.GetKind(), chartName, obj.GetName())
 				if err != nil {
 					return err
 				}
 				resourceKeys.Insert(rsKey)
-				_, _, rsFilename := resourceFilename(obj.GetAPIVersion(), obj.GetKind(), chartName, obj.GetName())
+				_, _, rsFilename := lib.ResourceFilename(obj.GetAPIVersion(), obj.GetKind(), chartName, obj.GetName())
 
 				// values
 				modelValues[rsKey] = ObjectContainer{
@@ -258,91 +255,6 @@ func GenerateChartMetadata() error {
 	}
 	filename := filepath.Join(chartDir, chartName, "Chart.yaml")
 	return ioutil.WriteFile(filename, data4, 0644)
-}
-
-type ResourceFn func(obj *unstructured.Unstructured) error
-
-func ProcessResource(dir string, fn ResourceFn) error {
-	return filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
-		if err != nil {
-			return err
-		}
-		if info.IsDir() {
-			return nil
-		}
-
-		fmt.Println(">>> ", path)
-		data, err := ioutil.ReadFile(path)
-		if err != nil {
-			return err
-		}
-		reader := ylib.NewYAMLOrJSONDecoder(bytes.NewReader(data), 2048)
-		for {
-			var obj unstructured.Unstructured
-			err := reader.Decode(&obj)
-			if err == io.EOF {
-				break
-			} else if err != nil {
-				return err
-			}
-			if obj.IsList() {
-				if err := obj.EachListItem(func(item runtime.Object) error {
-					return fn(item.(*unstructured.Unstructured))
-				}); err != nil {
-					return err
-				}
-			} else {
-				if err := fn(&obj); err != nil {
-					return err
-				}
-			}
-		}
-		return nil
-	})
-}
-
-func resourceKey(apiVersion, kind, chartName, name string) (string, error) {
-	gv, err := schema.ParseGroupVersion(apiVersion)
-	if err != nil {
-		return "", err
-	}
-
-	groupPrefix := gv.Group
-	groupPrefix = strings.TrimSuffix(groupPrefix, ".k8s.io")
-	groupPrefix = strings.TrimSuffix(groupPrefix, ".kubernetes.io")
-	//groupPrefix = strings.TrimSuffix(groupPrefix, ".x-k8s.io")
-	groupPrefix = strings.Replace(groupPrefix, ".", "_", -1)
-	groupPrefix = flect.Pascalize(groupPrefix)
-
-	var nameSuffix string
-	nameSuffix = strings.TrimPrefix(chartName, name)
-	nameSuffix = strings.Replace(nameSuffix, ".", "-", -1)
-	nameSuffix = strings.Trim(nameSuffix, "-")
-	nameSuffix = flect.Pascalize(nameSuffix)
-
-	return flect.Camelize(groupPrefix + kind + nameSuffix), nil
-}
-
-func resourceFilename(apiVersion, kind, chartName, name string) (string, string, string) {
-	gv, err := schema.ParseGroupVersion(apiVersion)
-	if err != nil {
-		panic(err)
-	}
-
-	groupPrefix := gv.Group
-	groupPrefix = strings.TrimSuffix(groupPrefix, ".k8s.io")
-	groupPrefix = strings.TrimSuffix(groupPrefix, ".kubernetes.io")
-	//groupPrefix = strings.TrimSuffix(groupPrefix, ".x-k8s.io")
-	groupPrefix = strings.Replace(groupPrefix, ".", "_", -1)
-	groupPrefix = flect.Pascalize(groupPrefix)
-
-	var nameSuffix string
-	nameSuffix = strings.TrimPrefix(chartName, name)
-	nameSuffix = strings.Replace(nameSuffix, ".", "-", -1)
-	nameSuffix = strings.Trim(nameSuffix, "-")
-	nameSuffix = flect.Pascalize(nameSuffix)
-
-	return flect.Underscore(kind), flect.Underscore(kind + nameSuffix), flect.Underscore(groupPrefix + kind + nameSuffix)
 }
 
 // toYAML takes an interface, marshals it to yaml, and returns a string. It will

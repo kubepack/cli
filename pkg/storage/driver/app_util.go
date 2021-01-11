@@ -17,8 +17,6 @@ limitations under the License.
 package driver
 
 import (
-	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -38,7 +36,6 @@ import (
 	rspb "helm.sh/helm/v3/pkg/release"
 	helmtime "helm.sh/helm/v3/pkg/time"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -48,7 +45,6 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/restmapper"
 	"sigs.k8s.io/application/api/app/v1beta1"
-	"sigs.k8s.io/yaml"
 )
 
 // newApplicationSecretsObject constructs a kubernetes Application object
@@ -336,67 +332,15 @@ func decodeReleaseFromApp(app *v1beta1.Application, di dynamic.Interface, cl dis
 	rls.Info.FirstDeployed, _ = helmtime.Parse(time.RFC3339, app.Annotations["helm.sh/first-deployed"])
 	rls.Info.LastDeployed, _ = helmtime.Parse(time.RFC3339, app.Annotations["helm.sh/last-deployed"])
 
-	sel, err := metav1.LabelSelectorAsSelector(app.Spec.Selector)
+	// versions := strings.Split(app.Annotations["helm.sh/component-versions"], ",")
+	mapper := restmapper.NewDeferredDiscoveryRESTMapper(cl)
+
+	manifest, values, err := lib.EditorChartValueManifest(app, mapper, di, rls.Name, rls.Namespace)
 	if err != nil {
 		return nil, err
 	}
 
-	var buf bytes.Buffer
-	values := map[string]interface{}{}
-
-	versions := strings.Split(app.Annotations["helm.sh/component-versions"], ",")
-	mapper := restmapper.NewDeferredDiscoveryRESTMapper(cl)
-	for i, gk := range app.Spec.ComponentGroupKinds {
-		mapping, err := mapper.RESTMapping(schema.GroupKind{
-			Group: gk.Group,
-			Kind:  gk.Kind,
-		}, versions[i])
-		if err != nil {
-			return nil, err
-		}
-		mapping.Resource.Version = versions[i]
-
-		var ri dynamic.ResourceInterface
-		if mapping.Scope.Name() == meta.RESTScopeNameNamespace {
-			ri = di.Resource(mapping.Resource).Namespace(app.Namespace)
-		} else {
-			ri = di.Resource(mapping.Resource)
-		}
-
-		list, err := ri.List(context.Background(), metav1.ListOptions{
-			LabelSelector: sel.String(),
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		err = list.EachListItem(func(obj runtime.Object) error {
-			buf.WriteString("\n---\n")
-			data, err := yaml.Marshal(obj)
-			if err != nil {
-				return err
-			}
-			buf.Write(data)
-
-			u := obj.(*unstructured.Unstructured)
-
-			err = unstructured.SetNestedField(values, u.Object["metadata"], u.GetAPIVersion(), u.GetKind(), "metadata")
-			if err != nil {
-				return err
-			}
-			if spec, ok := u.Object["spec"]; ok {
-				err = unstructured.SetNestedField(values, spec, u.GetAPIVersion(), u.GetKind(), "spec")
-				if err != nil {
-					return err
-				}
-			}
-			return nil
-		})
-		if err != nil {
-			return nil, err
-		}
-	}
-	rls.Manifest = buf.String()
+	rls.Manifest = manifest
 
 	if rls.Chart == nil {
 		rls.Chart = &chart.Chart{}
