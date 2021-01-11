@@ -3,19 +3,25 @@ module kubepack.dev/cli
 go 1.14
 
 require (
+	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/Masterminds/semver/v3 v3.1.0
+	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/Masterminds/sprig/v3 v3.1.0
 	github.com/evanphx/json-patch v4.9.0+incompatible
 	github.com/gabriel-vasile/mimetype v1.1.1
+	github.com/gobuffalo/flect v0.2.2
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/gosuri/uitable v0.0.4
-	github.com/jonboulle/clockwork v0.2.0
+	github.com/huandu/xstrings v1.3.2 // indirect
+	github.com/jonboulle/clockwork v0.1.0
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/pflag v1.0.5
 	gomodules.xyz/x v0.0.0-20201105065653-91c568df6331
-	helm.sh/helm/v3 v3.3.4
+	gopkg.in/yaml.v3 v3.0.0-20200603094226-e3079894b1e8
+	helm.sh/helm/v3 v3.4.1
 	k8s.io/api v0.18.9
+	k8s.io/apiextensions-apiserver v0.18.9
 	k8s.io/apimachinery v0.18.9
 	k8s.io/cli-runtime v0.18.9
 	k8s.io/client-go v12.0.0+incompatible
@@ -24,8 +30,10 @@ require (
 	k8s.io/kube-openapi v0.0.0-20200410145947-61e04a5be9a6
 	k8s.io/kubectl v0.18.9
 	k8s.io/utils v0.0.0-20200414100711-2df71ebbae66
-	kmodules.xyz/client-go v0.0.0-20201105071625-0b277310b9b8
-	kubepack.dev/kubepack v0.2.2-0.20201117003101-61644e0a9719
+	kmodules.xyz/client-go v0.0.0-20201208053851-a1d7be95e006
+	kmodules.xyz/resource-metadata v0.4.8-0.20210109211859-ee04a80b905a
+	kubepack.dev/chart-doc-gen v0.3.1-0.20210111011933-daa7c1d70a65
+	kubepack.dev/kubepack v0.2.2-0.20201228191331-2fb57a82eaa6
 	sigs.k8s.io/application v0.8.2-0.20200306235134-f10d9ca8abd4
 	sigs.k8s.io/yaml v1.2.0
 )
@@ -118,8 +126,10 @@ replace k8s.io/component-base => k8s.io/component-base v0.18.9
 
 replace k8s.io/kube-openapi => k8s.io/kube-openapi v0.0.0-20200410145947-61e04a5be9a6
 
+replace k8s.io/kubectl => k8s.io/kubectl v0.18.9
+
 replace k8s.io/kubernetes => github.com/kmodules/kubernetes v1.19.0-alpha.0.0.20200922200158-8b13196d8dc4
 
 replace k8s.io/utils => k8s.io/utils v0.0.0-20200324210504-a9aa75ae1b89
 
-replace sigs.k8s.io/application => github.com/kubepack/application v0.8.4-0.20201117013009-57cb1e10e2ed
+replace sigs.k8s.io/application => github.com/kubepack/application v0.8.4-0.20200705202912-9d241d6484e3

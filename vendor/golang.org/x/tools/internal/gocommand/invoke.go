@@ -32,39 +32,16 @@ type Runner struct {
 // 1.14: go: updating go.mod: existing contents have changed since last read
 var modConcurrencyError = regexp.MustCompile(`go:.*go.mod.*contents have changed`)
 
-// Run is a convenience wrapper around RunRaw.
-// It returns only stdout and a "friendly" error.
+// Run calls Runner.RunRaw, serializing requests if they fight over
+// go.mod changes.
 func (runner *Runner) Run(ctx context.Context, inv Invocation) (*bytes.Buffer, error) {
-	stdout, _, friendly, _ := runner.runRaw(ctx, inv)
+	stdout, _, friendly, _ := runner.RunRaw(ctx, inv)
 	return stdout, friendly
 }
 
-// RunPiped runs the invocation serially, always waiting for any concurrent
-// invocations to complete first.
-func (runner *Runner) RunPiped(ctx context.Context, inv Invocation, stdout, stderr io.Writer) error {
-	_, err := runner.runPiped(ctx, inv, stdout, stderr)
-	return err
-}
-
-// RunRaw runs the invocation, serializing requests only if they fight over
+// RunRaw calls Invocation.runRaw, serializing requests if they fight over
 // go.mod changes.
 func (runner *Runner) RunRaw(ctx context.Context, inv Invocation) (*bytes.Buffer, *bytes.Buffer, error, error) {
-	return runner.runRaw(ctx, inv)
-}
-
-func (runner *Runner) runPiped(ctx context.Context, inv Invocation, stdout, stderr io.Writer) (error, error) {
-	runner.loadMu.Lock()
-	runner.serializeLoads++
-
-	defer func() {
-		runner.serializeLoads--
-		runner.loadMu.Unlock()
-	}()
-
-	return inv.runWithFriendlyError(ctx, stdout, stderr)
-}
-
-func (runner *Runner) runRaw(ctx context.Context, inv Invocation) (*bytes.Buffer, *bytes.Buffer, error, error) {
 	// We want to run invocations concurrently as much as possible. However,
 	// if go.mod updates are needed, only one can make them and the others will
 	// fail. We need to retry in those cases, but we don't want to thrash so
@@ -80,15 +57,13 @@ func (runner *Runner) runRaw(ctx context.Context, inv Invocation) (*bytes.Buffer
 	}
 	defer func() {
 		if locked {
-			locked = false
 			runner.serializeLoads--
 			runner.loadMu.Unlock()
 		}
 	}()
 
 	for {
-		stdout, stderr := &bytes.Buffer{}, &bytes.Buffer{}
-		friendlyErr, err := inv.runWithFriendlyError(ctx, stdout, stderr)
+		stdout, stderr, friendlyErr, err := inv.runRaw(ctx)
 		if friendlyErr == nil || !modConcurrencyError.MatchString(friendlyErr.Error()) {
 			return stdout, stderr, friendlyErr, err
 		}
@@ -96,6 +71,7 @@ func (runner *Runner) runRaw(ctx context.Context, inv Invocation) (*bytes.Buffer
 		if !locked {
 			runner.loadMu.Lock()
 			runner.serializeLoads++
+			locked = true
 		}
 	}
 }
@@ -110,8 +86,12 @@ type Invocation struct {
 	Logf       func(format string, args ...interface{})
 }
 
-func (i *Invocation) runWithFriendlyError(ctx context.Context, stdout, stderr io.Writer) (friendlyError error, rawError error) {
-	rawError = i.run(ctx, stdout, stderr)
+// RunRaw is like RunPiped, but also returns the raw stderr and error for callers
+// that want to do low-level error handling/recovery.
+func (i *Invocation) runRaw(ctx context.Context) (stdout *bytes.Buffer, stderr *bytes.Buffer, friendlyError error, rawError error) {
+	stdout = &bytes.Buffer{}
+	stderr = &bytes.Buffer{}
+	rawError = i.RunPiped(ctx, stdout, stderr)
 	if rawError != nil {
 		friendlyError = rawError
 		// Check for 'go' executable not being found.
@@ -126,7 +106,8 @@ func (i *Invocation) runWithFriendlyError(ctx context.Context, stdout, stderr io
 	return
 }
 
-func (i *Invocation) run(ctx context.Context, stdout, stderr io.Writer) error {
+// RunPiped is like Run, but relies on the given stdout/stderr
+func (i *Invocation) RunPiped(ctx context.Context, stdout, stderr io.Writer) error {
 	log := i.Logf
 	if log == nil {
 		log = func(string, ...interface{}) {}
