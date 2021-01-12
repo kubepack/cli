@@ -1063,7 +1063,7 @@ kmodules.xyz/resource-metadata/hub/resourcedescriptors
 # kubepack.dev/chart-doc-gen v0.3.1-0.20210111011933-daa7c1d70a65
 ## explicit
 kubepack.dev/chart-doc-gen/api
-# kubepack.dev/kubepack v0.2.2-0.20210112051458-55306c24efed
+# kubepack.dev/kubepack v0.2.2-0.20210112164031-ab9fc7d7b12c
 ## explicit
 kubepack.dev/kubepack/apis
 kubepack.dev/kubepack/apis/kubepack

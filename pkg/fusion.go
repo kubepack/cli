@@ -137,6 +137,7 @@ func NewCmdFuse() *cobra.Command {
 			}
 
 			{
+				removeDescription(&chartSchema)
 				data3, err := yaml.Marshal(chartSchema)
 				if err != nil {
 					return err
@@ -289,5 +290,57 @@ func addDocComments(node *y3.Node) {
 	}
 	for i := range node.Content {
 		addDocComments(node.Content[i])
+	}
+}
+
+// removeDescription removes defaults from apiextensions.k8s.io/v1beta1 CRD definition.
+func removeDescription(schema *crdv1.JSONSchemaProps) {
+	if schema == nil {
+		return
+	}
+
+	schema.Description = ""
+
+	if schema.Items != nil {
+		removeDescription(schema.Items.Schema)
+
+		for idx := range schema.Items.JSONSchemas {
+			removeDescription(&schema.Items.JSONSchemas[idx])
+		}
+	}
+
+	for idx := range schema.AllOf {
+		removeDescription(&schema.AllOf[idx])
+	}
+	for idx := range schema.OneOf {
+		removeDescription(&schema.OneOf[idx])
+	}
+	for idx := range schema.AnyOf {
+		removeDescription(&schema.AnyOf[idx])
+	}
+	if schema.Not != nil {
+		removeDescription(schema.Not)
+	}
+	for key, prop := range schema.Properties {
+		removeDescription(&prop)
+		schema.Properties[key] = prop
+	}
+	if schema.AdditionalProperties != nil {
+		removeDescription(schema.AdditionalProperties.Schema)
+	}
+	for key, prop := range schema.PatternProperties {
+		removeDescription(&prop)
+		schema.PatternProperties[key] = prop
+	}
+	for key, prop := range schema.Dependencies {
+		removeDescription(prop.Schema)
+		schema.Dependencies[key] = prop
+	}
+	if schema.AdditionalItems != nil {
+		removeDescription(schema.AdditionalItems.Schema)
+	}
+	for key, prop := range schema.Definitions {
+		removeDescription(&prop)
+		schema.Definitions[key] = prop
 	}
 }
