@@ -34,7 +34,6 @@ github.com/MakeNowJust/heredoc
 # github.com/Masterminds/goutils v1.1.0
 github.com/Masterminds/goutils
 # github.com/Masterminds/semver v1.5.0
-## explicit
 github.com/Masterminds/semver
 # github.com/Masterminds/semver/v3 v3.1.0
 ## explicit
@@ -327,9 +326,9 @@ github.com/gregjones/httpcache/diskcache
 github.com/hashicorp/golang-lru
 github.com/hashicorp/golang-lru/simplelru
 # github.com/huandu/xstrings v1.3.2
-## explicit
 github.com/huandu/xstrings
 # github.com/imdario/mergo v0.3.8 => github.com/imdario/mergo v0.3.5
+## explicit
 github.com/imdario/mergo
 # github.com/inconshreveable/mousetrap v1.0.0
 github.com/inconshreveable/mousetrap
@@ -1064,7 +1063,7 @@ kmodules.xyz/resource-metadata/hub/resourcedescriptors
 # kubepack.dev/chart-doc-gen v0.3.1-0.20210111011933-daa7c1d70a65
 ## explicit
 kubepack.dev/chart-doc-gen/api
-# kubepack.dev/kubepack v0.2.2-0.20210111140209-b1342c8a18a4
+# kubepack.dev/kubepack v0.2.2-0.20210112051458-55306c24efed
 ## explicit
 kubepack.dev/kubepack/apis
 kubepack.dev/kubepack/apis/kubepack

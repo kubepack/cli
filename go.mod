@@ -3,7 +3,6 @@ module kubepack.dev/cli
 go 1.14
 
 require (
-	github.com/Masterminds/semver v1.5.0 // indirect
 	github.com/Masterminds/semver/v3 v3.1.0
 	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/Masterminds/sprig/v3 v3.1.0
@@ -12,7 +11,7 @@ require (
 	github.com/gobuffalo/flect v0.2.2
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/gosuri/uitable v0.0.4
-	github.com/huandu/xstrings v1.3.2 // indirect
+	github.com/imdario/mergo v0.3.8
 	github.com/jonboulle/clockwork v0.1.0
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.1.1
@@ -33,7 +32,7 @@ require (
 	kmodules.xyz/client-go v0.0.0-20201230092550-8ca15cfcbefa
 	kmodules.xyz/resource-metadata v0.4.8-0.20210109211859-ee04a80b905a
 	kubepack.dev/chart-doc-gen v0.3.1-0.20210111011933-daa7c1d70a65
-	kubepack.dev/kubepack v0.2.2-0.20210111140209-b1342c8a18a4
+	kubepack.dev/kubepack v0.2.2-0.20210112051458-55306c24efed
 	kubepack.dev/lib-helm v0.2.1
 	sigs.k8s.io/application v0.8.2-0.20200306235134-f10d9ca8abd4
 	sigs.k8s.io/yaml v1.2.0
