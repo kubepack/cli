@@ -153,7 +153,7 @@ func newApplicationObject(rls *rspb.Release, lbs labels) (*v1beta1.Application, 
 	var commonLabels map[string]string
 
 	// Hooks ?
-	components, commonLabels, err = extractComponents(rls.Manifest, components, commonLabels)
+	components, commonLabels, err := extractComponents(rls.Manifest, components, commonLabels)
 	if err != nil {
 		return nil, err
 	}
