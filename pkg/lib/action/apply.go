@@ -127,6 +127,7 @@ func (x *Applier) Run() (*release.Release, error) {
 
 	cmd := action.NewApply(x.cfg)
 
+	cmd.ApplyOptions = x.opts.ApplyOptions
 	cmd.CreateNamespace = x.opts.CreateNamespace
 	cmd.DryRun = x.opts.DryRun
 	cmd.DisableHooks = x.opts.DisableHooks
