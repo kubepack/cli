@@ -12,12 +12,3 @@ $ kubectl pack apply-chart he11 kubepack-bundles/hello --set autoscaling.enabled
 
 $ kubectl get applications
 ```
-
-## Fuse chart from sample dir
-
-```console
-$ kubectl pack fuse-chart \
-  	--sample-dir=./testdata/fusion/samples \
-	--chart-dir=./testdata/fusion/charts \
-	--chart-name=mongodb-editor
-```

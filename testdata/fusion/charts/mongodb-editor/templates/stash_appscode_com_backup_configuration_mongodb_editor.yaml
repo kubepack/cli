@@ -1,3 +1,0 @@
-{{- with .Values.stashAppscodeComBackupConfigurationMongodbEditor }}
-{{- . | toYaml }}
-{{- end }}

@@ -96,7 +96,6 @@ func NewRootCmd() *cobra.Command {
 	rootCmd.AddCommand(newInstallCmd(actionConfig, os.Stdout))
 	rootCmd.AddCommand(newUpgradeCmd(actionConfig, os.Stdout))
 	rootCmd.AddCommand(newUninstallCmd(actionConfig, os.Stdout))
-	rootCmd.AddCommand(NewCmdFuse())
 
 	return rootCmd
 }

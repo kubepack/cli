@@ -4,11 +4,9 @@ go 1.14
 
 require (
 	github.com/Masterminds/semver/v3 v3.1.0
-	github.com/Masterminds/sprig v2.22.0+incompatible
 	github.com/Masterminds/sprig/v3 v3.1.0
 	github.com/evanphx/json-patch v4.9.0+incompatible
 	github.com/gabriel-vasile/mimetype v1.1.1
-	github.com/gobuffalo/flect v0.2.2
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/gosuri/uitable v0.0.4
 	github.com/imdario/mergo v0.3.8
@@ -17,10 +15,8 @@ require (
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/pflag v1.0.5
 	gomodules.xyz/x v0.0.0-20201105065653-91c568df6331
-	gopkg.in/yaml.v3 v3.0.0-20200603094226-e3079894b1e8
 	helm.sh/helm/v3 v3.4.1
 	k8s.io/api v0.18.9
-	k8s.io/apiextensions-apiserver v0.18.9
 	k8s.io/apimachinery v0.18.9
 	k8s.io/cli-runtime v0.18.9
 	k8s.io/client-go v12.0.0+incompatible
@@ -30,8 +26,6 @@ require (
 	k8s.io/kubectl v0.18.9
 	k8s.io/utils v0.0.0-20200414100711-2df71ebbae66
 	kmodules.xyz/client-go v0.0.0-20201230092550-8ca15cfcbefa
-	kmodules.xyz/resource-metadata v0.4.8-0.20210109211859-ee04a80b905a
-	kubepack.dev/chart-doc-gen v0.3.1-0.20210111011933-daa7c1d70a65
 	kubepack.dev/kubepack v0.2.2-0.20210112164031-ab9fc7d7b12c
 	kubepack.dev/lib-helm v0.2.1
 	sigs.k8s.io/application v0.8.2-0.20200306235134-f10d9ca8abd4
