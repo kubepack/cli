@@ -25,7 +25,7 @@ import (
 	"strings"
 
 	"kubepack.dev/cli/pkg/action"
-	"kubepack.dev/cli/pkg/apply"
+	"kmodules.xyz/apply"
 	"kubepack.dev/cli/pkg/delete"
 
 	"github.com/spf13/pflag"

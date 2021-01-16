@@ -23,7 +23,7 @@ import (
 	"time"
 
 	"kubepack.dev/cli/pkg/action"
-	"kubepack.dev/cli/pkg/apply"
+	"kmodules.xyz/apply"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"

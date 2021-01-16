@@ -10,7 +10,6 @@ require (
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/gosuri/uitable v0.0.4
 	github.com/imdario/mergo v0.3.8
-	github.com/jonboulle/clockwork v0.1.0
 	github.com/pkg/errors v0.9.1
 	github.com/spf13/cobra v1.1.1
 	github.com/spf13/pflag v1.0.5
@@ -22,9 +21,8 @@ require (
 	k8s.io/client-go v12.0.0+incompatible
 	k8s.io/component-base v0.18.9
 	k8s.io/klog v1.0.0
-	k8s.io/kube-openapi v0.0.0-20200410145947-61e04a5be9a6
 	k8s.io/kubectl v0.18.9
-	k8s.io/utils v0.0.0-20200414100711-2df71ebbae66
+	kmodules.xyz/apply v0.0.0-20210116151714-fd7ceb3d27af
 	kmodules.xyz/client-go v0.0.0-20201230092550-8ca15cfcbefa
 	kubepack.dev/kubepack v0.2.2-0.20210116103714-3dc228d948f4
 	kubepack.dev/lib-helm v0.2.1
