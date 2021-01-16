@@ -270,6 +270,7 @@ github.com/cpuguy83/go-md2man v1.0.10/go.mod h1:SmD6nW6nTyfqj6ABTjUi3V3JVMnlJmwc
 github.com/cpuguy83/go-md2man/v2 v2.0.0-20190314233015-f79a8a8ca69d/go.mod h1:maD7wRr/U5Z6m/iR4s+kqSMx2CaBsrgA7czyZG/E6dU=
 github.com/cpuguy83/go-md2man/v2 v2.0.0/go.mod h1:maD7wRr/U5Z6m/iR4s+kqSMx2CaBsrgA7czyZG/E6dU=
 github.com/creack/pty v1.1.7/go.mod h1:lj5s0c3V2DBrqTV7llrYr5NG6My20zk30Fl46Y7DoTY=
+github.com/cubewise-code/go-mime v0.0.0-20200519001935-8c5762b177d8 h1:Z9lwXumT5ACSmJ7WGnFl+OMLLjpz5uR2fyz7dC255FI=
 github.com/cubewise-code/go-mime v0.0.0-20200519001935-8c5762b177d8/go.mod h1:4abs/jPXcmJzYoYGF91JF9Uq9s/KL5n1jvFDix8KcqY=
 github.com/cyphar/filepath-securejoin v0.2.2 h1:jCwT2GTP+PY5nBz3c/YL5PAIbusElVrPujOBSCj8xRg=
 github.com/cyphar/filepath-securejoin v0.2.2/go.mod h1:FpkQEhXnPnOthhzymB7CGsFk2G9VLXONKD9G7QGMM+4=
@@ -1617,6 +1618,7 @@ kubepack.dev/chart-doc-gen v0.3.1-0.20210111011933-daa7c1d70a65/go.mod h1:P8LlQG
 kubepack.dev/cli v0.0.0-20210112035115-09fc3b76e2ea/go.mod h1:JPi/Nn88POAKIKdVTtmdQAkq1iXIW4wsezw+VQA9Dyg=
 kubepack.dev/cli v0.0.0-20210112051729-521812ce6309/go.mod h1:Z3Rwh3CYrZLkTHq/iniJPwu/MEIfeSf4J5cArQzXqa8=
 kubepack.dev/cli v0.0.0-20210113083119-ee6b52830b1b/go.mod h1:MbUr0iKgEJbEcdcWFznW3ECL9W5vvlt/Csh+t4rA3J8=
+kubepack.dev/cli v0.0.0-20210113144801-70abc9bfd539/go.mod h1:xw9xTnxKbWjhGcnXuaKRSIWAIPo/lObKjF/FrJNj6n4=
 kubepack.dev/kubepack v0.2.2-0.20210111140209-b1342c8a18a4 h1:jg44xy/ZiuRLVJnD9syWpgY7q4rioHX40mD5SceisVk=
 kubepack.dev/kubepack v0.2.2-0.20210111140209-b1342c8a18a4/go.mod h1:r5fqmUZhyjLVMrsQoP0RAFVyYNTUqZ/Y8DK0+7/LNyw=
 kubepack.dev/kubepack v0.2.2-0.20210112051458-55306c24efed h1:IgmpgeoFYh+L9HsIm0vO7QFIjQhMIWiGyfarM0GaSF8=
@@ -1625,6 +1627,8 @@ kubepack.dev/kubepack v0.2.2-0.20210112164031-ab9fc7d7b12c h1:2982isZcQu9EVsJF0u
 kubepack.dev/kubepack v0.2.2-0.20210112164031-ab9fc7d7b12c/go.mod h1:DbvQIzxZXQri9tWtl9KRVHBqct0+8TmPGU/HnD/dXU8=
 kubepack.dev/kubepack v0.2.2-0.20210113140616-c2a5c3bf8f66 h1:zsqOMP2faRuJ/Vt8dPe6h0/YGlpmBuFkNoz7woPLr5Y=
 kubepack.dev/kubepack v0.2.2-0.20210113140616-c2a5c3bf8f66/go.mod h1:UmRckBjn21/RTFz4SQO24xYMqxFhL/q1+CA9jIkMG2c=
+kubepack.dev/kubepack v0.2.2-0.20210116103714-3dc228d948f4 h1:JZc/6ItKCJLpWn3+v+RTJTB5kzBKu6BYj0q0ij9A3oQ=
+kubepack.dev/kubepack v0.2.2-0.20210116103714-3dc228d948f4/go.mod h1:h4c5AfIcLC+dyGvibgHaAAQnw/JenBAf50Nx0vk7dTQ=
 kubepack.dev/lib-helm v0.2.1 h1:KnRfYRuepJT7Zgfi6iJHYrF3SFfGjrvWLMxhPOsmy/I=
 kubepack.dev/lib-helm v0.2.1/go.mod h1:rrfYDaHg26/HT2E7pp2o5TKdf5a/YOtbFtUr6SLab6I=
 modernc.org/cc v1.0.0/go.mod h1:1Sk4//wdnYJiUIxnW8ddKpaOJCF37yAdqYnkxUpaYxw=

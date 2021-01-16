@@ -26,7 +26,7 @@ require (
 	k8s.io/kubectl v0.18.9
 	k8s.io/utils v0.0.0-20200414100711-2df71ebbae66
 	kmodules.xyz/client-go v0.0.0-20201230092550-8ca15cfcbefa
-	kubepack.dev/kubepack v0.2.2-0.20210113140616-c2a5c3bf8f66
+	kubepack.dev/kubepack v0.2.2-0.20210116103714-3dc228d948f4
 	kubepack.dev/lib-helm v0.2.1
 	sigs.k8s.io/application v0.8.2-0.20200306235134-f10d9ca8abd4
 	sigs.k8s.io/yaml v1.2.0
