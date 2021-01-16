@@ -1030,9 +1030,6 @@ k8s.io/utils/pointer
 k8s.io/utils/trace
 # kmodules.xyz/apiversion v0.2.0
 kmodules.xyz/apiversion
-# kmodules.xyz/application-util v0.0.0-20210116140945-71e4a434c6c6
-## explicit
-kmodules.xyz/application-util/app/v1beta1
 # kmodules.xyz/apply v0.0.0-20210116151714-fd7ceb3d27af
 ## explicit
 kmodules.xyz/apply
@@ -1072,7 +1069,7 @@ kubepack.dev/lib-helm/internal/tlsutil
 kubepack.dev/lib-helm/internal/urlutil
 kubepack.dev/lib-helm/internal/version
 kubepack.dev/lib-helm/repo
-# sigs.k8s.io/application v0.8.2-0.20200306235134-f10d9ca8abd4 => github.com/kubepack/application v0.8.4-0.20200705202912-9d241d6484e3
+# sigs.k8s.io/application v0.8.2-0.20200306235134-f10d9ca8abd4 => github.com/kmodules/application v0.8.4-0.20200705202912-9d241d6484e3
 ## explicit
 sigs.k8s.io/application/api/app/v1beta1
 sigs.k8s.io/application/client/clientset/versioned
@@ -1155,4 +1152,4 @@ sigs.k8s.io/yaml
 # k8s.io/kubectl => k8s.io/kubectl v0.18.9
 # k8s.io/kubernetes => github.com/kmodules/kubernetes v1.19.0-alpha.0.0.20200922200158-8b13196d8dc4
 # k8s.io/utils => k8s.io/utils v0.0.0-20200324210504-a9aa75ae1b89
-# sigs.k8s.io/application => github.com/kubepack/application v0.8.4-0.20200705202912-9d241d6484e3
+# sigs.k8s.io/application => github.com/kmodules/application v0.8.4-0.20200705202912-9d241d6484e3
