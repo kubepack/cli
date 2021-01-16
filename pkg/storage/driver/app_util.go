@@ -19,7 +19,6 @@ package driver
 import (
 	"encoding/json"
 	"fmt"
-	"kmodules.xyz/client-go/tools/parser"
 	"net/http"
 	"sort"
 	"strconv"
@@ -41,6 +40,7 @@ import (
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/restmapper"
+	"kmodules.xyz/client-go/tools/parser"
 	"sigs.k8s.io/application/api/app/v1beta1"
 )
 
