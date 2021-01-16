@@ -19,6 +19,7 @@ package driver
 import (
 	"encoding/json"
 	"fmt"
+	"kmodules.xyz/client-go/tools/parser"
 	"net/http"
 	"sort"
 	"strconv"
@@ -223,7 +224,7 @@ func mergeSecret(app *v1beta1.Application, s *corev1.Secret) {
 }
 
 func extractComponents(data string, components map[metav1.GroupKind]string, commonLabels map[string]string) (map[metav1.GroupKind]string, map[string]string, error) {
-	err := lib.ProcessResources([]byte(data), func(obj *unstructured.Unstructured) error {
+	err := parser.ProcessResources([]byte(data), func(obj *unstructured.Unstructured) error {
 		gv, err := schema.ParseGroupVersion(obj.GetAPIVersion())
 		if err != nil {
 			return err

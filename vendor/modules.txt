@@ -1036,7 +1036,7 @@ kmodules.xyz/application-util/app/v1beta1
 # kmodules.xyz/apply v0.0.0-20210116151714-fd7ceb3d27af
 ## explicit
 kmodules.xyz/apply
-# kmodules.xyz/client-go v0.0.0-20201230092550-8ca15cfcbefa
+# kmodules.xyz/client-go v0.0.0-20210116153227-569dec1f25e4
 ## explicit
 kmodules.xyz/client-go
 kmodules.xyz/client-go/apiextensions
@@ -1045,6 +1045,7 @@ kmodules.xyz/client-go/apiextensions/v1beta1
 kmodules.xyz/client-go/discovery
 kmodules.xyz/client-go/logs
 kmodules.xyz/client-go/meta
+kmodules.xyz/client-go/tools/parser
 kmodules.xyz/client-go/tools/wait
 # kmodules.xyz/resource-metadata v0.4.8-0.20210113000222-d15533e4bb66
 kmodules.xyz/resource-metadata/apis/meta
