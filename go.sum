@@ -1600,10 +1600,13 @@ k8s.io/utils v0.0.0-20200324210504-a9aa75ae1b89 h1:d4vVOjXm687F1iLSP2q3lyPPuyvTU
 k8s.io/utils v0.0.0-20200324210504-a9aa75ae1b89/go.mod h1:sZAwmy6armz5eXlNoLmJcl4F1QuKu7sr+mFQ0byX7Ew=
 kmodules.xyz/apiversion v0.2.0 h1:vAQYqZFm4xu4pbB1cAdHbFEPES6EQkcR4wc06xdTOWk=
 kmodules.xyz/apiversion v0.2.0/go.mod h1:oPX8g8LvlPdPX3Yc5YvCzJHQnw3YF/X4/jdW0b1am80=
+kmodules.xyz/application-util v0.0.0-20210116140945-71e4a434c6c6 h1:M+5CnqW/yr87AAbErTPwf/rjTAVBkj4fxcSQzPlJKlQ=
+kmodules.xyz/application-util v0.0.0-20210116140945-71e4a434c6c6/go.mod h1:irKZ5k9AAlLz1raJK1AFnSGgSd85lB5snB6RDIlU9OQ=
 kmodules.xyz/apply v0.0.0-20210116151714-fd7ceb3d27af h1:DE1aa6Qlv/TKQCA+5a+qXJ0GpOyAwQRkZFxp5j01T88=
 kmodules.xyz/apply v0.0.0-20210116151714-fd7ceb3d27af/go.mod h1:nfm6EEM4OXLbvg5RxMsEHGvqpwgRHWEgdf7hg3hzMSQ=
 kmodules.xyz/client-go v0.0.0-20201105071625-0b277310b9b8 h1:zs2+yI/Ola5HjdtfP29XD76Bx5BO4WchC2uN9lkhxQM=
 kmodules.xyz/client-go v0.0.0-20201105071625-0b277310b9b8/go.mod h1:WXDwZBmvrcLgGcuO9iZpI9jcfPuDFfWbxA4EnhAFtGw=
+kmodules.xyz/client-go v0.0.0-20201208053851-a1d7be95e006/go.mod h1:WXDwZBmvrcLgGcuO9iZpI9jcfPuDFfWbxA4EnhAFtGw=
 kmodules.xyz/client-go v0.0.0-20201230092550-8ca15cfcbefa h1:1a6/yWhBhxAXzvPsPXW4tg7l93pP2B9LsEZOe4ldGPE=
 kmodules.xyz/client-go v0.0.0-20201230092550-8ca15cfcbefa/go.mod h1:WXDwZBmvrcLgGcuO9iZpI9jcfPuDFfWbxA4EnhAFtGw=
 kmodules.xyz/crd-schema-fuzz v0.0.0-20200521005638-2433a187de95/go.mod h1:jpu8xFsDKd6kAWUAKk8oTu/GQGBWqhrcaDeOJdaCJnk=

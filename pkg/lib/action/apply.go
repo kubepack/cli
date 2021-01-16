@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"kubepack.dev/cli/pkg/action"
-	"kmodules.xyz/apply"
 	"kubepack.dev/lib-helm/repo"
 
 	jsonpatch "github.com/evanphx/json-patch"
@@ -19,6 +18,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
+	"kmodules.xyz/apply"
 	"sigs.k8s.io/yaml"
 )
 

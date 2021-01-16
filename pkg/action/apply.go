@@ -24,8 +24,6 @@ import (
 	"strings"
 	"time"
 
-	"kmodules.xyz/apply"
-
 	"github.com/pkg/errors"
 	"helm.sh/helm/v3/pkg/chart"
 	"helm.sh/helm/v3/pkg/chartutil"
@@ -42,6 +40,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	utilerrors "k8s.io/apimachinery/pkg/util/errors"
 	"k8s.io/cli-runtime/pkg/resource"
+	"kmodules.xyz/apply"
 	"sigs.k8s.io/yaml"
 )
 

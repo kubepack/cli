@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"kubepack.dev/cli/pkg/action"
-	"kmodules.xyz/apply"
 
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
@@ -38,6 +37,7 @@ import (
 	"helm.sh/helm/v3/pkg/release"
 	"k8s.io/cli-runtime/pkg/genericclioptions"
 	cmdutil "k8s.io/kubectl/pkg/cmd/util"
+	"kmodules.xyz/apply"
 )
 
 const applyDesc = `

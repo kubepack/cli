@@ -25,10 +25,10 @@ import (
 	"strings"
 
 	"kubepack.dev/cli/pkg/action"
-	"kmodules.xyz/apply"
 	"kubepack.dev/cli/pkg/delete"
 
 	"github.com/spf13/pflag"
+	"kmodules.xyz/apply"
 	"sigs.k8s.io/yaml"
 
 	// Import to initialize client auth plugins.

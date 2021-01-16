@@ -1030,6 +1030,9 @@ k8s.io/utils/pointer
 k8s.io/utils/trace
 # kmodules.xyz/apiversion v0.2.0
 kmodules.xyz/apiversion
+# kmodules.xyz/application-util v0.0.0-20210116140945-71e4a434c6c6
+## explicit
+kmodules.xyz/application-util/app/v1beta1
 # kmodules.xyz/apply v0.0.0-20210116151714-fd7ceb3d27af
 ## explicit
 kmodules.xyz/apply
