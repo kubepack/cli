@@ -116,8 +116,8 @@ func newApplyCmd(cfg *action.Configuration, f cmdutil.Factory, out io.Writer) *c
 		Out:    os.Stdout,
 		ErrOut: os.Stderr,
 	})
-	//cmdutil.CheckErr(o.CompleteFlags(f, cmd))
-	//cmdutil.CheckErr(o.Run())
+	// cmdutil.CheckErr(o.CompleteFlags(f, cmd))
+	// cmdutil.CheckErr(o.Run())
 
 	cmd := &cobra.Command{
 		Use:   "apply-chart [NAME] [CHART]",
@@ -147,10 +147,10 @@ func newApplyCmd(cfg *action.Configuration, f cmdutil.Factory, out io.Writer) *c
 	cmd.Flags().StringVarP(&o.Selector, "selector", "l", o.Selector, "Selector (label query) to filter on, supports '=', '==', and '!='.(e.g. -l key1=value1,key2=value2)")
 	cmd.Flags().BoolVar(&o.All, "all", o.All, "Select all resources in the namespace of the specified resource types.")
 	cmd.Flags().StringArrayVar(&o.PruneWhitelist, "prune-whitelist", o.PruneWhitelist, "Overwrite the default whitelist with <group/version/kind> for --prune")
-	//cmd.Flags().BoolVar(&o.OpenAPIPatch, "openapi-patch", o.OpenAPIPatch, "If true, use openapi to calculate diff when the openapi presents and the resource can be found in the openapi spec. Otherwise, fall back to use baked-in types.")
-	//cmd.Flags().Bool("server-dry-run", false, "If true, request will be sent to server with dry-run flag, which means the modifications won't be persisted.")
-	//cmd.Flags().MarkDeprecated("server-dry-run", "--server-dry-run is deprecated and can be replaced with --dry-run=server.")
-	//cmd.Flags().MarkHidden("server-dry-run")
+	// cmd.Flags().BoolVar(&o.OpenAPIPatch, "openapi-patch", o.OpenAPIPatch, "If true, use openapi to calculate diff when the openapi presents and the resource can be found in the openapi spec. Otherwise, fall back to use baked-in types.")
+	// cmd.Flags().Bool("server-dry-run", false, "If true, request will be sent to server with dry-run flag, which means the modifications won't be persisted.")
+	// cmd.Flags().MarkDeprecated("server-dry-run", "--server-dry-run is deprecated and can be replaced with --dry-run=server.")
+	// cmd.Flags().MarkHidden("server-dry-run")
 
 	cmdutil.AddDryRunFlag(cmd)
 	cmdutil.AddServerSideApplyFlags(cmd)
@@ -161,7 +161,7 @@ func newApplyCmd(cfg *action.Configuration, f cmdutil.Factory, out io.Writer) *c
 func addApplyFlags(f *pflag.FlagSet, client *action.Apply, valueOpts *values.Options) {
 	f.BoolVar(&client.CreateNamespace, "create-namespace", false, "create the release namespace if not present")
 
-	//TODO: FIX
+	// TODO: FIX
 	// f.BoolVar(&client.DryRun, "dry-run", false, "simulate an apply")
 	f.BoolVar(&client.DisableHooks, "no-hooks", false, "prevent hooks from running during apply")
 	f.BoolVar(&client.Replace, "replace", false, "re-use the given name, only if that name is a deleted release which remains in the history. This is unsafe in production")
