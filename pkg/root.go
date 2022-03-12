@@ -44,9 +44,7 @@ import (
 	"kmodules.xyz/client-go/logs"
 )
 
-var (
-	settings = cli.New()
-)
+var settings = cli.New()
 
 func debug(format string, v ...interface{}) {
 	if settings.Debug {
@@ -56,7 +54,7 @@ func debug(format string, v ...interface{}) {
 }
 
 func NewRootCmd() *cobra.Command {
-	var rootCmd = &cobra.Command{
+	rootCmd := &cobra.Command{
 		Use:               "kubectl-pack",
 		Short:             `Test kubectl apply`,
 		Long:              `Test kubectl apply`,

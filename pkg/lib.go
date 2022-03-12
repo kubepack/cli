@@ -36,8 +36,10 @@ import (
 	"k8s.io/client-go/util/homedir"
 )
 
-const outputFlag = "output"
-const postRenderFlag = "post-renderer"
+const (
+	outputFlag     = "output"
+	postRenderFlag = "post-renderer"
+)
 
 func addValueOptionsFlags(f *pflag.FlagSet, v *values.Options) {
 	f.StringSliceVarP(&v.ValueFiles, "values", "f", []string{}, "specify values in a YAML file or a URL (can specify multiple)")

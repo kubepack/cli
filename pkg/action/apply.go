@@ -209,7 +209,7 @@ func (i *Apply) Run(chrt *chart.Chart, vals map[string]interface{}) (*release.Re
 		return nil, err
 	}
 
-	//special case for helm template --is-upgrade
+	// special case for helm template --is-upgrade
 	isUpgrade := i.IsUpgrade && i.DryRun
 	options := chartutil.ReleaseOptions{
 		Name:      i.ReleaseName,
@@ -357,7 +357,6 @@ func (i *Apply) Run(chrt *chart.Chart, vals map[string]interface{}) (*release.Re
 		if err := i.cfg.KubeClient.Wait(resources, i.Timeout); err != nil {
 			return i.failRelease(rel, err)
 		}
-
 	}
 
 	if !i.DisableHooks {
