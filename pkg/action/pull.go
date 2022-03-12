@@ -122,10 +122,9 @@ func (p *Pull) Run(chartRef string) (string, error) {
 			udCheck = filepath.Join(udCheck, chartName)
 		}
 		if _, err := os.Stat(udCheck); err != nil {
-			if err := os.MkdirAll(udCheck, 0755); err != nil {
+			if err := os.MkdirAll(udCheck, 0o755); err != nil {
 				return out.String(), errors.Wrap(err, "failed to untar (mkdir)")
 			}
-
 		} else {
 			return out.String(), errors.Errorf("failed to untar: a file or directory with the name %s already exists", udCheck)
 		}

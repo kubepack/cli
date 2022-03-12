@@ -47,7 +47,7 @@ type ApplyOptions struct {
 	Namespace   string
 	ReleaseName string
 
-	//OutputDir                string
+	// OutputDir                string
 	Atomic                   bool
 	SkipCRDs                 bool
 	SubNotes                 bool
@@ -139,7 +139,7 @@ func (x *Applier) Run() (*release.Release, error) {
 	// cmd.DependencyUpdate         = x.opts.DependencyUpdate
 	cmd.Namespace = x.opts.Namespace
 	cmd.ReleaseName = x.opts.ReleaseName
-	//OutputDir
+	// OutputDir
 	cmd.Atomic = x.opts.Atomic
 	cmd.SkipCRDs = x.opts.SkipCRDs
 	cmd.SubNotes = x.opts.SubNotes

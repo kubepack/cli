@@ -159,7 +159,6 @@ func (r *Rollback) performRollback(currentRelease, targetRelease *release.Releas
 	}
 
 	results, err := r.cfg.KubeClient.Update(current, target, r.Force)
-
 	if err != nil {
 		msg := fmt.Sprintf("Rollback %q failed: %s", targetRelease.Name, err)
 		r.cfg.Log("warning: %s", msg)
