@@ -3,31 +3,37 @@ module kubepack.dev/cli
 go 1.17
 
 require (
-	github.com/Masterminds/semver/v3 v3.1.0
-	github.com/Masterminds/sprig/v3 v3.1.0
-	github.com/evanphx/json-patch v4.9.0+incompatible
-	github.com/gabriel-vasile/mimetype v1.1.1
+	github.com/Masterminds/semver/v3 v3.1.1
+	github.com/Masterminds/sprig/v3 v3.2.2
+	github.com/evanphx/json-patch v4.11.0+incompatible
+	github.com/gabriel-vasile/mimetype v1.3.0
 	github.com/golang/glog v0.0.0-20160126235308-23def4e6c14b
 	github.com/gosuri/uitable v0.0.4
-	github.com/imdario/mergo v0.3.8
+	github.com/imdario/mergo v0.3.12
 	github.com/pkg/errors v0.9.1
-	github.com/spf13/cobra v1.1.1
+	github.com/spf13/cobra v1.2.1
 	github.com/spf13/pflag v1.0.5
-	gomodules.xyz/x v0.0.0-20201105065653-91c568df6331
-	helm.sh/helm/v3 v3.4.1
-	k8s.io/api v0.18.9
-	k8s.io/apimachinery v0.18.9
-	k8s.io/cli-runtime v0.18.9
+	gomodules.xyz/x v0.0.13
+	helm.sh/helm/v3 v3.6.1
+	k8s.io/api v0.21.1
+	k8s.io/apimachinery v0.21.1
+	k8s.io/cli-runtime v0.21.1
 	k8s.io/client-go v12.0.0+incompatible
-	k8s.io/component-base v0.18.9
+	k8s.io/component-base v0.21.1
 	k8s.io/klog v1.0.0
-	k8s.io/kubectl v0.18.9
-	kmodules.xyz/apply master
-	kmodules.xyz/client-go master
-	kubepack.dev/kubepack master
-	kubepack.dev/lib-helm v0.2.1
+	k8s.io/kubectl v0.21.1
+	kmodules.xyz/apply v0.0.0-20211025153323-d91a958bf54c
+	kmodules.xyz/client-go v0.0.0-20220317213815-2a6d5a5784f2
+	kubepack.dev/kubepack v0.3.9-0.20220312063744-a4dcd72bbde2
+	kubepack.dev/lib-helm v0.3.2-0.20211223113921-d8cbb538a0e3
 	sigs.k8s.io/application v0.8.2-0.20200306235134-f10d9ca8abd4
 	sigs.k8s.io/yaml v1.2.0
+)
+
+require (
+	github.com/json-iterator/go v1.1.12 // indirect
+	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
+	github.com/modern-go/reflect2 v1.0.2 // indirect
 )
 
 replace bitbucket.org/ww/goautoneg => gomodules.xyz/goautoneg v0.0.0-20120707110453-a547fc61f48d
