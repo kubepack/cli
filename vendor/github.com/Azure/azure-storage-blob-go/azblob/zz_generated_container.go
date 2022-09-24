@@ -442,7 +442,7 @@ func (client containerClient) getAccessPolicyResponder(resp pipeline.Response) (
 		return result, err
 	}
 	defer resp.Response().Body.Close()
-	b, err := ioutil.ReadAll(resp.Response().Body)
+	b, err := io.ReadAll(resp.Response().Body)
 	if err != nil {
 		return result, err
 	}
@@ -633,7 +633,7 @@ func (client containerClient) listBlobFlatSegmentResponder(resp pipeline.Respons
 		return result, err
 	}
 	defer resp.Response().Body.Close()
-	b, err := ioutil.ReadAll(resp.Response().Body)
+	b, err := io.ReadAll(resp.Response().Body)
 	if err != nil {
 		return result, err
 	}
@@ -731,7 +731,7 @@ func (client containerClient) listBlobHierarchySegmentResponder(resp pipeline.Re
 		return result, err
 	}
 	defer resp.Response().Body.Close()
-	b, err := ioutil.ReadAll(resp.Response().Body)
+	b, err := io.ReadAll(resp.Response().Body)
 	if err != nil {
 		return result, err
 	}

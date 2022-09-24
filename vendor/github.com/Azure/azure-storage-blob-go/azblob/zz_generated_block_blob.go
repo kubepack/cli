@@ -218,7 +218,7 @@ func (client blockBlobClient) getBlockListResponder(resp pipeline.Response) (pip
 		return result, err
 	}
 	defer resp.Response().Body.Close()
-	b, err := ioutil.ReadAll(resp.Response().Body)
+	b, err := io.ReadAll(resp.Response().Body)
 	if err != nil {
 		return result, err
 	}

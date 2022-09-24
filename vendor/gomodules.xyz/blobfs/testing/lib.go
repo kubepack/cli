@@ -22,7 +22,7 @@ func NewTestGCS(bucketURL, credential string) (*blobfs.BlobFS, error) {
 		}
 	}
 
-	saKey, err := ioutil.ReadFile(credential)
+	saKey, err := os.ReadFile(credential)
 	if err != nil {
 		return nil, err
 	}
@@ -33,7 +33,7 @@ func NewTestGCS(bucketURL, credential string) (*blobfs.BlobFS, error) {
 	}
 
 	filename := credential + "-private-key"
-	err = ioutil.WriteFile(filename, cfg.PrivateKey, 0644)
+	err = os.WriteFile(filename, cfg.PrivateKey, 0644)
 	if err != nil {
 		return nil, err
 	}

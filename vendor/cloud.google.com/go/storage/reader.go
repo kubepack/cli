@@ -157,7 +157,7 @@ func (o *ObjectHandle) NewRangeReader(ctx context.Context, offset, length int64)
 				return ErrObjectNotExist
 			}
 			if res.StatusCode < 200 || res.StatusCode > 299 {
-				body, _ := ioutil.ReadAll(res.Body)
+				body, _ := io.ReadAll(res.Body)
 				res.Body.Close()
 				return &googleapi.Error{
 					Code:   res.StatusCode,

@@ -160,7 +160,7 @@ func initialize(filename string, src []byte, opt *Options) ([]byte, *Options, er
 		opt.Env.GocmdRunner = &gocommand.Runner{}
 	}
 	if src == nil {
-		b, err := ioutil.ReadFile(filename)
+		b, err := os.ReadFile(filename)
 		if err != nil {
 			return nil, nil, err
 		}

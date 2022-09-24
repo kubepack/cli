@@ -39,7 +39,7 @@ type File struct {
 
 // Load loads a named mo file.
 func Load(name string) (*File, error) {
-	data, err := ioutil.ReadFile(name)
+	data, err := os.ReadFile(name)
 	if err != nil {
 		return nil, err
 	}
@@ -168,7 +168,7 @@ func LoadData(data []byte) (*File, error) {
 
 // Save saves a mo file.
 func (f *File) Save(name string) error {
-	return ioutil.WriteFile(name, f.Data(), 0666)
+	return os.WriteFile(name, f.Data(), 0666)
 }
 
 // Save returns a mo file format data.

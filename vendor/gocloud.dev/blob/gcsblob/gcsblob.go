@@ -239,7 +239,7 @@ func (o *URLOpener) forParams(ctx context.Context, q url.Values) (*Options, erro
 		opts.MakeSignBytes = nil
 	}
 	if keyPath := q.Get("private_key_path"); keyPath != "" {
-		pk, err := ioutil.ReadFile(keyPath)
+		pk, err := os.ReadFile(keyPath)
 		if err != nil {
 			return nil, err
 		}

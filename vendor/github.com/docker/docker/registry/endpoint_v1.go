@@ -161,7 +161,7 @@ func (e *V1Endpoint) Ping() (PingResult, error) {
 
 	defer resp.Body.Close()
 
-	jsonString, err := ioutil.ReadAll(resp.Body)
+	jsonString, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return PingResult{Standalone: false}, fmt.Errorf("error while reading the http response: %s", err)
 	}

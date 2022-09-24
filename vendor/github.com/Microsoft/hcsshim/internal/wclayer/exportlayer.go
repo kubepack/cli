@@ -53,7 +53,7 @@ type LayerReader interface {
 // The caller must have taken the SeBackupPrivilege privilege
 // to call this and any methods on the resulting LayerReader.
 func NewLayerReader(path string, parentLayerPaths []string) (LayerReader, error) {
-	exportPath, err := ioutil.TempDir("", "hcs")
+	exportPath, err := os.MkdirTemp("", "hcs")
 	if err != nil {
 		return nil, err
 	}

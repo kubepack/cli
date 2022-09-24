@@ -407,7 +407,7 @@ type TestFactory struct {
 func NewTestFactory() *TestFactory {
 	// specify an optionalClientConfig to explicitly use in testing
 	// to avoid polluting an existing user config.
-	tmpFile, err := ioutil.TempFile("", "cmdtests_temp")
+	tmpFile, err := os.CreateTemp("", "cmdtests_temp")
 	if err != nil {
 		panic(fmt.Sprintf("unable to create a fake client config: %v", err))
 	}

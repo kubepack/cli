@@ -83,7 +83,7 @@ func ReadCertsDirectory(tlsConfig *tls.Config, directory string) error {
 				tlsConfig.RootCAs = systemPool
 			}
 			logrus.Debugf("crt: %s", filepath.Join(directory, f.Name()))
-			data, err := ioutil.ReadFile(filepath.Join(directory, f.Name()))
+			data, err := os.ReadFile(filepath.Join(directory, f.Name()))
 			if err != nil {
 				return err
 			}
