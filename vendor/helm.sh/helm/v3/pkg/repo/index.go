@@ -97,7 +97,7 @@ func NewIndexFile() *IndexFile {
 
 // LoadIndexFile takes a file at the given path and returns an IndexFile object
 func LoadIndexFile(path string) (*IndexFile, error) {
-	b, err := ioutil.ReadFile(path)
+	b, err := os.ReadFile(path)
 	if err != nil {
 		return nil, err
 	}

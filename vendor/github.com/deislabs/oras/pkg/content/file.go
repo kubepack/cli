@@ -144,7 +144,7 @@ func (s *FileStore) descFromDir(name, mediaType, root string) (ocispec.Descripto
 }
 
 func (s *FileStore) tempFile() (*os.File, error) {
-	file, err := ioutil.TempFile("", TempFilePattern)
+	file, err := os.CreateTemp("", TempFilePattern)
 	if err != nil {
 		return nil, err
 	}

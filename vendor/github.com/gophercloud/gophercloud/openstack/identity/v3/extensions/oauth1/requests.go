@@ -319,7 +319,7 @@ func RequestToken(client *gophercloud.ServiceClient, opts RequestTokenOptsBuilde
 		r.Err = fmt.Errorf("unsupported Content-Type: %q", v)
 		return
 	}
-	r.Body, r.Err = ioutil.ReadAll(resp.Body)
+	r.Body, r.Err = io.ReadAll(resp.Body)
 	return
 }
 
@@ -447,7 +447,7 @@ func CreateAccessToken(client *gophercloud.ServiceClient, opts CreateAccessToken
 		r.Err = fmt.Errorf("unsupported Content-Type: %q", v)
 		return
 	}
-	r.Body, r.Err = ioutil.ReadAll(resp.Body)
+	r.Body, r.Err = io.ReadAll(resp.Body)
 	return
 }
 

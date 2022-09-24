@@ -84,7 +84,7 @@ func (s *OCIStore) SaveIndex() error {
 	}
 
 	path := filepath.Join(s.root, OCIImageIndexFile)
-	return ioutil.WriteFile(path, indexJSON, 0644)
+	return os.WriteFile(path, indexJSON, 0644)
 }
 
 // AddReference adds or updates an reference to index.
@@ -152,7 +152,7 @@ func (s *OCIStore) validateOCILayoutFile() error {
 			return err
 		}
 
-		return ioutil.WriteFile(layoutFilePath, layoutJSON, 0644)
+		return os.WriteFile(layoutFilePath, layoutJSON, 0644)
 	}
 	defer layoutFile.Close()
 

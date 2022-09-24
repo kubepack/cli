@@ -22,7 +22,7 @@ fmt.Println(mime.String(), mime.Extension(), err)
 
 Get the MIME type from a byte slice.
 ```go
-data, _ := ioutil.ReadFile(file) // ignoring error for brevity's sake
+data, _ := os.ReadFile(file) // ignoring error for brevity's sake
 mime := mimetype.Detect(data)
 fmt.Println(mime.String(), mime.Extension())
 // Output: application/pdf .pdf

@@ -142,7 +142,7 @@ func (o *URLOpener) forParams(ctx context.Context, q url.Values) (*Options, erro
 		if err != nil {
 			return nil, err
 		}
-		sk, err := ioutil.ReadFile(keyPath)
+		sk, err := os.ReadFile(keyPath)
 		if err != nil {
 			return nil, err
 		}
@@ -503,7 +503,7 @@ func (b *bucket) NewTypedWriter(ctx context.Context, key string, contentType str
 	if err := os.MkdirAll(filepath.Dir(path), 0777); err != nil {
 		return nil, err
 	}
-	f, err := ioutil.TempFile(filepath.Dir(path), "fileblob")
+	f, err := os.CreateTemp(filepath.Dir(path), "fileblob")
 	if err != nil {
 		return nil, err
 	}

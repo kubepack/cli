@@ -200,7 +200,7 @@ func detectDuplicates(plugs []*Plugin) error {
 // LoadDir loads a plugin from the given directory.
 func LoadDir(dirname string) (*Plugin, error) {
 	pluginfile := filepath.Join(dirname, PluginFileName)
-	data, err := ioutil.ReadFile(pluginfile)
+	data, err := os.ReadFile(pluginfile)
 	if err != nil {
 		return nil, errors.Wrapf(err, "failed to read plugin at %q", pluginfile)
 	}

@@ -113,7 +113,7 @@ func readManufacturer() ([]byte, error) {
 	if reader == nil {
 		return nil, errors.New("got nil reader")
 	}
-	manufacturer, err := ioutil.ReadAll(reader)
+	manufacturer, err := io.ReadAll(reader)
 	if err != nil {
 		return nil, fmt.Errorf("failed reading %v: %v", linuxProductNameFile, err)
 	}

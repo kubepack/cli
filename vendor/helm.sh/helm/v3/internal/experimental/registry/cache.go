@@ -293,7 +293,7 @@ func (cache *Cache) saveChartContentLayer(ch *chart.Chart) (*ocispec.Descriptor,
 	if err != nil {
 		return nil, false, errors.Wrap(err, "failed to save")
 	}
-	contentBytes, err := ioutil.ReadFile(tmpFile)
+	contentBytes, err := os.ReadFile(tmpFile)
 	if err != nil {
 		return nil, false, err
 	}

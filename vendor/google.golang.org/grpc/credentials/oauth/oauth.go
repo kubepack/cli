@@ -58,7 +58,7 @@ type jwtAccess struct {
 
 // NewJWTAccessFromFile creates PerRPCCredentials from the given keyFile.
 func NewJWTAccessFromFile(keyFile string) (credentials.PerRPCCredentials, error) {
-	jsonKey, err := ioutil.ReadFile(keyFile)
+	jsonKey, err := os.ReadFile(keyFile)
 	if err != nil {
 		return nil, fmt.Errorf("credentials: failed to read the service account key file: %v", err)
 	}
@@ -155,7 +155,7 @@ func NewServiceAccountFromKey(jsonKey []byte, scope ...string) (credentials.PerR
 // NewServiceAccountFromFile constructs the PerRPCCredentials using the JSON key file
 // of a Google Developers service account.
 func NewServiceAccountFromFile(keyFile string, scope ...string) (credentials.PerRPCCredentials, error) {
-	jsonKey, err := ioutil.ReadFile(keyFile)
+	jsonKey, err := os.ReadFile(keyFile)
 	if err != nil {
 		return nil, fmt.Errorf("credentials: failed to read the service account key file: %v", err)
 	}

@@ -195,7 +195,7 @@ func (l *jsonReferenceLoader) loadFromHTTP(address string) (interface{}, error) 
 		return nil, errors.New(formatErrorDescription(Locale.HttpBadStatus(), ErrorDetails{"status": resp.Status}))
 	}
 
-	bodyBuff, err := ioutil.ReadAll(resp.Body)
+	bodyBuff, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return nil, err
 	}
@@ -210,7 +210,7 @@ func (l *jsonReferenceLoader) loadFromFile(path string) (interface{}, error) {
 	}
 	defer f.Close()
 
-	bodyBuff, err := ioutil.ReadAll(f)
+	bodyBuff, err := io.ReadAll(f)
 	if err != nil {
 		return nil, err
 	}

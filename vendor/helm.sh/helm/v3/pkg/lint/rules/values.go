@@ -75,7 +75,7 @@ func validateValuesFile(valuesPath string, overrides map[string]interface{}) err
 
 	ext := filepath.Ext(valuesPath)
 	schemaPath := valuesPath[:len(valuesPath)-len(ext)] + ".schema.json"
-	schema, err := ioutil.ReadFile(schemaPath)
+	schema, err := os.ReadFile(schemaPath)
 	if len(schema) == 0 {
 		return nil
 	}
