@@ -157,7 +157,8 @@ func (s statusPrinter) WriteTable(out io.Writer) error {
 			if h.LastRun.StartedAt.IsZero() {
 				continue
 			}
-			fmt.Fprintf(out, "TEST SUITE:     %s\n%s\n%s\n%s\n",
+			fmt.Fprintf(
+				out, "TEST SUITE:     %s\n%s\n%s\n%s\n",
 				h.Name,
 				fmt.Sprintf("Last Started:   %s", h.LastRun.StartedAt.Format(time.ANSIC)),
 				fmt.Sprintf("Last Completed: %s", h.LastRun.CompletedAt.Format(time.ANSIC)),
